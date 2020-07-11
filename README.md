@@ -37,7 +37,7 @@ plot letting you inspect the correct and incorrect classificiations.
 ## Installation
 
 ``` r
-devtools::install_github(billster45/tidycorels)
+devtools::install_github("billster45/tidycorels")
 ```
 
 ## tidycorels simple example

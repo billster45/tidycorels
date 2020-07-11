@@ -34,7 +34,7 @@ kable_table <- function(table, title) {
 ## Installation
 
 ```{r, eval=FALSE}
-devtools::install_github(billster45/tidycorels)
+devtools::install_github("billster45/tidycorels")
 ```
 
 ## tidycorels simple example
@@ -108,7 +108,7 @@ A list of useful objects is returned. First let's view the rules captured from t
 corels_juiced_tidy$corels_console_output[4:8]
 ```
 
-And see those rules converted to `dplyr::case_when()` code.
+And see those rules converted to `dplyr::case_when()` code. 
 
 ```{r}
 corels_juiced_tidy$dplyr_code
