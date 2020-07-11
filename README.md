@@ -1576,10 +1576,6 @@ example, if we follow one dominannt green path of manual cars (am\_X1 =
 1), they have more than 3 gears (gear\_X3 = 0), a straight engine
 (vs\_x0 = 1), and low displacement volume (disp\_bin1 = 0).
 
-``` r
-t <- mtcars %>% dplyr::bind_cols(corels_juiced_tidy$alluvial_df)
-```
-
 The dataframe used to create the basic alluvial plot is also availabe to
 create our own alluvial plots such as this interactive version.
 
@@ -1613,7 +1609,7 @@ conf_matrix <-
 ggplot2::autoplot(conf_matrix, "heatmap")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 And use the confusion matrix to generate performace statistics.
 
@@ -3479,7 +3475,7 @@ plot is also available.
 diabetes_train_model$alluvial_plot
 ```
 
-<img src="README_files/figure-gfm/unnamed-chunk-19-1.png" width="100%" />
+<img src="README_files/figure-gfm/unnamed-chunk-18-1.png" width="100%" />
 
 ### Performance on test data
 
@@ -3520,7 +3516,7 @@ conf_matrix <-
 ggplot2::autoplot(conf_matrix, "heatmap")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 The confusion matrix can be used to generate the perfomance statistics
 below. The accuracy achieved by Corels on the unseen test data is 0.760.

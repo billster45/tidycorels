@@ -126,10 +126,6 @@ The leftmost column is the true label for each car, either automatic (0) or manu
 
 The alluvial plot clearly shows which rules are important in the classifcation and exactly how the classifiation is arrived at. For example, if we follow one dominannt green path of manual cars (am_X1 = 1), they have more than 3 gears (gear_X3 = 0), a straight engine (vs_x0 = 1), and low displacement volume (disp_bin1 = 0).  
 
-```{r}
-t <- mtcars %>% dplyr::bind_cols(corels_juiced_tidy$alluvial_df)
-```
-
 The dataframe used to create the basic alluvial plot is also availabe to create our own alluvial plots such as this interactive version.
 
 ```{r, eval=FALSE}
