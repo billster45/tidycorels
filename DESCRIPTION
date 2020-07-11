@@ -2,13 +2,12 @@ Package: tidycorels
 Type: Package
 Title: What the Package Does (Title Case)
 Version: 0.1.0
-Author: Who wrote it
+Author: Bill Cockerill
 Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Description: tidycorels makes it easier to use the R package corels.
+License: MIT + file LICENSE
 Imports:
- corels, dplyr, magrittr, stringi, stringr
+ corels, dplyr, ggplot2, tidyselect, magrittr, stringi, stringr, easyalluvial, recipes
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.0
