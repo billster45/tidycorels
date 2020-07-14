@@ -1,94 +1,93 @@
 #' write_to_txt_file
 #' converts columns of a dataframe to a textfile in the format corels can use
-#' @param df name of the dataframe to convert
+#' @param DT name of the dataframe to convert
 #' @param cols a list of the columns in the data frame to convert
 #' @param txt_file the name of the text file
 #' @return the data frame as a text file
 #' @importFrom magrittr %>%
 #' @keywords internal
 #' @noRd
-write_to_txt_file <- function(df, cols, txt_file) {
+write_to_txt_file <- function(DT, cols, txt_file) {
   file.create(txt_file) # create a blank text file
 
   for (col in cols) {
-    single_col <- df %>%
-      dplyr::select(tidyselect::all_of(col)) # select one column
+
+    single_col <- DT[, ..col] # select one column
 
     single_col_char <- base::as.character(single_col) # convert column to a single character string
 
-    single_col_char <- stringr::str_replace_all(single_col_char, "[\r\n,c()]", "") # replace any text other than the values
+    single_col_char <- base::gsub(pattern = "[\r\n,c()]",
+                                  replacement = "",
+                                  x= single_col_char) # replace any text other than the values
 
-    name <- colnames(single_col) %>% # use the column name to label the character string in the format Corels epxects
-      stringi::stri_replace_last_regex(pattern = "[_]", replacement = ":", opts_regex = NULL)
+    name <- base::colnames(single_col) # use the column name to label the character string in the format Corels epxects
+    name <- base::gsub(pattern = "[_]",
+                       replacement = ":",
+                       x = name)
 
-    final <- paste0("{", name, "}", " ", single_col_char) # append the column name to the column values
+    final <- base::paste0("{", name, "}", " ", single_col_char) # append the column name to the column values
 
-    write(final, file = txt_file, append = TRUE) # finally append to the text file
+    base::write(x = final,
+                file = txt_file,
+                append = TRUE) # finally append to the text file
   }
 }
 
 #' capture_corels
 #' converts captured corels output to dplyr::Case_when() code
 #' @param corels_output corels captured output
-#' @importFrom magrittr %>%
-#' @return the corels rules as dplyr code
+#' @param outcome_cols
+#' @return the corels rules as DT code
 #' @keywords internal
 #' @noRd
-capture_corels <- function(corels_output) {
+capture_corels <- function(corels_output, outcome_cols) {
 
-  corels_prediction <- NULL
+  clean <- base::subset(corels_output,base::grepl(pattern = "^if*|^else*", x = corels_output))  # keep only rules
 
-  lines <- length(corels_output) # find out many lines in rules
+  rule_count = base::length(clean) # count rules
 
-  rules <- as.character()
-  for (line in 1:lines) {
-    string <- corels_output[line]
+  clean <- base::gsub("then", "== 1,", clean) # replace "then" with comma
 
-    # convert the if or else if parts to dplyr
-    if (stringr::str_detect(string, pattern = "if \\(|else if")) {
-      string <- string %>%
-        stringr::str_replace(pattern = ",", replacement = "}) & ({")
+  clean <- base::gsub("\\{|\\}", "`", clean) # remove curly brackets and replace with back ticks
 
-      # extract if and then parts
-      then_loc <- stringr::str_locate(string, pattern = "then")
-      if_condition <- stringr::str_sub(string, start = 1, end = then_loc[1] - 1)
-      then_condition <- stringr::str_sub(string, start = then_loc[1], end = stringr::str_length(string))
+  clean <- base::gsub("\\(|\\)", "", clean) # remove brackets
 
-      if_condition <-
-        if_condition %>%
-        stringr::str_replace_all(pattern = "\\(\\{", replacement = "`") %>%
-        stringr::str_replace_all(pattern = "\\}\\)", replacement = "` == 1") %>%
-        stringr::str_replace_all(pattern = "if|else if", replacement = "")
+  clean <- base::gsub(":", "_", clean) # replace colon with underscore
 
-      then_colon_loc <- stringr::str_locate(then_condition, pattern = ":")
+  clean <- base::gsub("^if ", "DT[,corels_pred := fifelse( ", clean) # replace the first if
 
-      then_condition <-
-        then_condition %>%
-        stringr::str_sub(start = then_colon_loc[1], end = stringr::str_length(then_condition)) %>%
-        stringr::str_replace_all(pattern = "[:})]", replacement = "") %>%
-        stringr::str_extract("(\\d)+") # keep only the number
+  clean <- base::gsub("^else if ", "fifelse( ", clean) # replace the else if
 
-      combined_if_then <- paste0(if_condition, "~ '", then_condition, "'")
-      rules <- paste(rules, combined_if_then, ",")
-    } else if (stringr::str_detect(string, pattern = "else \\(")) { # convert the final else to dplyr
-      else_colon_loc <- stringr::str_locate(string, pattern = ":")
+  clean <- base::gsub(pattern = outcome_cols[1], replacement = base::substr(x = outcome_cols[1],
+                                                                            start = nchar(outcome_cols[1]) ,
+                                                                            stop = nchar(outcome_cols[1])),
+                      x = clean) # replace outcome with outcome value
 
-      else_condition <-
-        string %>%
-        stringr::str_sub(start = else_colon_loc[1], end = stringr::str_length(string)) %>%
-        stringr::str_replace_all(pattern = "[:})]", replacement = "") %>%
-        stringr::str_extract("(\\d)+") # keep only the number
+  clean <- base::gsub(pattern = outcome_cols[2], replacement = base::substr(x = outcome_cols[2],
+                                                                            start = nchar(outcome_cols[2]) ,
+                                                                            stop = nchar(outcome_cols[2])),
+                      x = clean) # replace outcome with outcome value
 
-      rules <- paste0(rules, " TRUE ~ '", else_condition, "'))")
-    }
-  }
 
-  rules <- rules %>%
-    stringr::str_replace_all(pattern = ":", replacement = "_")
+  clean <- base::gsub('"','', clean) # replace quotes
 
-  rules <- paste0("dplyr::mutate(corels_prediction = dplyr::case_when(", rules)
+  clean <- base::gsub('`1`','1', clean) # remove back ticks from the outcome value 1
+  clean <- base::gsub('`0`','0', clean) # remove back ticks from the outcome value 0
+
+  clean <- paste0(clean,",") # add commas between conditions
+
+  clean <- paste(clean, collapse = "") # collapse into single string
+
+  clean <- base::gsub("else ","", clean) # remove final else
+
+  clean <- base::gsub(",$","", clean) # remove final bracket
+
+  end_brackets <- paste(base::rep(")",rule_count-1), collapse = "") # create right number of brackets for the rules
+
+  rules <- paste0(clean,end_brackets,"]") # build the final data.table ifelse code
 
   return(rules)
+
 }
 
 #' tidy_corels
@@ -106,157 +105,84 @@ capture_corels <- function(corels_output) {
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
-#'
-#' library(magrittr)
-#' # Using mtcars dataset and recipes, create binary predictors as Corels expects
-#'
-#' corels_pre_proc <-
-#'   recipes::recipe(am ~ .,
-#'                   data = datasets::mtcars
-#'   ) %>%
-#'   # discretise numeric variables into bins
-#'   recipes::step_discretize(mpg, disp, hp, drat, wt, qsec, min_unique = 1) %>%
-#'   recipes::step_mutate_at(recipes::all_predictors(), fn = list(~ as.factor(.))) %>%
-#'   # convert each value of each category into its own 0/1 binary column
-#'   recipes::step_dummy(recipes::all_predictors(), one_hot = TRUE) %>%
-#'   recipes::step_nzv(recipes::all_predictors()) %>%
-#'   # convert each value of the outcome into its own 0/1 binary column
-#'   # ensure outcome is 0/1 rather than words
-#'   recipes::step_integer(recipes::all_outcomes(), zero_based = TRUE) %>%
-#'   recipes::step_mutate_at(recipes::all_outcomes(), fn = list(~ as.factor(.))) %>%
-#'   recipes::step_dummy(recipes::all_outcomes(), one_hot = TRUE)
-#'
-#' #Create a pre-processed dataframe from the mtcars recipe above
-#'
-#' corels_juiced <-
-#'   corels_pre_proc %>%
-#'   recipes::prep() %>%
-#'   recipes::juice()
-#'
-#' # Run the tidy_corels() function
-#'
-#'   corels_juiced_tidy <-
-#'    tidycorels::tidy_corels(
-#'      df = corels_juiced,
-#'      outcome_cols = c("am_X0", "am_X1"),
-#'      run_bfs = TRUE,
-#'      calculate_size = TRUE,
-#'      run_curiosity = TRUE,
-#'      regularization = 0.01,
-#'      curiosity_policy = 3,
-#'      map_type = 1
-#'   )
-#'
-#' # View the alluvial plot of the Corels rules applied to df
-#'
-#' corels_juiced_tidy$alluvial_plot
 tidy_corels <- function(df, outcome_cols, ...) {
+
+  DT <- data.table::setDT(df)
 
   df_pred <- NULL
   corels_prediction <- NULL
 
-
   tempdir <- tempdir()
 
   # extract only the names of df predictor columns
-  pred_cols <- colnames(df %>%
-    dplyr::select(-outcome_cols))
+  pred_cols <- base::colnames(DT[, -..outcome_cols])
 
   # write only df predictor columns to a training text file
   train_text_file <- paste0(tempdir, "/train.txt")
 
   write_to_txt_file(
-    df = df,
+    DT = DT,
     cols = pred_cols,
     txt_file = train_text_file
   )
 
-  # extract only the names of two label columns of df
-  label_cols <- colnames(df %>%
-    dplyr::select(outcome_cols))
-
-  # write only the two mtcar label columns to a text file
+  # write only the two label columns to a text file
   label_text_file <- paste0(tempdir, "/labels.txt")
   write_to_txt_file(
-    df = df,
-    cols = label_cols,
+    DT = DT,
+    cols = outcome_cols,
     txt_file = label_text_file
   )
 
   # use text files in corels to make prediction
   logdir <- tempdir()
 
-  corels_console_output <-
+  #  corels_console_output <-
+  corels_output <-
     utils::capture.output({ # capture output to convert into code
       corels::corels(
         rules_file = train_text_file,
         labels_file = label_text_file,
         log_dir = logdir,
-        verbosity_policy = "minor",
-        ...
+        verbosity_policy = "minor"
+        #,
+        #...
       )
     })
 
+  #print the normal corels output to the console
+  print(corels_output)
+
   # convert rules to dplyr::case_when() logic
-  dplyr_code <- capture_corels(corels_output = corels_console_output)
+  DT_code <- capture_corels(corels_output = corels_output,
+                            outcome_cols = outcome_cols)
 
-  # apply the dplyr code to the data frame
-  dplyr_code <- paste0("df_pred <- df %>% ", dplyr_code)
+  # apply DT code to the data frame
+  base::eval(base::parse(text = DT_code)) # execute the dplyr code to create df_pred
 
-  base::eval(base::parse(text = dplyr_code)) # execute the dplyr code to create df_pred
+  # alluvial data frame
+  pattern <- "`\\s*(.*?)\\s*`" # regex to find word between back ticks
+  corels_predictors <- regmatches(DT_code, gregexpr(pattern, DT_code)) # extract columns between back ticks
+  corels_predictors <- paste(corels_predictors[[1]], collapse = ",") # collapse
+  corels_predictors <- paste0("alluvial_DT <- DT[, .(",outcome_cols[2],",",corels_predictors,",corels_pred)]")
 
-  # alluvial plot
-  corels_predictors <-
-    dplyr_code %>%
-    stringr::str_extract_all("`\\s*(.*?)\\s*`") # extracts just the column names between the back-ticks ``
-
-  corels_predictors <-
-    stringi::stri_paste_list(corels_predictors, collapse = "", sep = ",")
-
-  alluvial_code <- paste0(
-    "alluvial_df <- df_pred %>% dplyr::select(",
-    label_cols[2],
-    ",",
-    corels_predictors,
-    ",corels_prediction)"
-  )
-
-  base::eval(base::parse(text = alluvial_code))
-
-  alluvial_df <-
-    alluvial_df %>%
-    dplyr::mutate(corels_prediction = as.numeric(stringr::str_extract(corels_prediction, "(\\d)+"))) %>%
-    dplyr::mutate_all(as.factor)
-
-  alluvial_plot <-
-    alluvial_df %>%
-    easyalluvial::alluvial_wide(stratum_width = 0.2) +
-    ggplot2::theme_minimal() +
-    ggplot2::labs(
-      title = "Corels if-then-else logic",
-      subtitle = " From truth (far left columun) to Corels classification (far right column)"
-    )
+  # apply DT code to the data frame
+  base::eval(base::parse(text = corels_predictors)) # execute the DT code to create alluvial_DT
+  # set all columns as factors for good plotting
+  for(col in colnames(alluvial_DT))
+    data.table::set(alluvial_DT, j = col, value = as.factor(alluvial_DT[[col]]))
 
   # read in text files from temp directory to output too
   train_txt <- utils::read.table(train_text_file)
   label_txt <- utils::read.table(label_text_file)
 
-  # clean the dplyr code to just be the case_when logic before returning
-  magritter_loc <- stringr::str_locate(dplyr_code, pattern = "%>%")
-  dplyr_code <- stringr::str_sub(dplyr_code, start = magritter_loc[2] + 2, end = stringr::str_length(dplyr_code))
-
   return(c(list(
-    df_pred = df_pred,
-    corels_console_output = corels_console_output,
-    dplyr_code = dplyr_code,
-    label_cols = label_cols,
-    corels_predictors = corels_predictors,
-    alluvial_plot = alluvial_plot,
-    alluvial_code = alluvial_code,
-    alluvial_df = alluvial_df,
+    DT_pred = DT,
+    corels_console_output = corels_output,
+    DT_code = DT_code,
+    alluvial_DT = alluvial_DT,
     train_text_file = train_txt,
-    label_text_file = label_txt
-  )))
+    label_text_file = label_txt)))
 }
 
 #' predict_corels

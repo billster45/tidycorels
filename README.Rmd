@@ -52,11 +52,12 @@ Finally, Corels requires the label column split into two columns representing ea
 ```{r}
 library(tidymodels)
 library(corels)
-library(tidycorels)
+#library(tidycorels)
 library(kableExtra)
 library(easyalluvial)
 library(parcats)
 library(formattable)
+library(data.table)
 
 ## Using mtcars dataset and recipes, create binary predictors as Corels expects
 corels_pre_proc <-
@@ -90,7 +91,7 @@ All other arguments of `corels::corels()` are available to set, other than the f
 
 ```{r}
 corels_juiced_tidy <-
-  tidycorels::tidy_corels(
+  tidy_corels(
     df = corels_juiced,
     outcome_cols = c("am_X0", "am_X1"),
     run_bfs = TRUE,
@@ -108,10 +109,10 @@ A list of useful objects is returned. First let's view the rules captured from t
 corels_juiced_tidy$corels_console_output[4:8]
 ```
 
-And see those rules converted to `dplyr::case_when()` code. 
+And see those rules converted to data.table if-else code. 
 
 ```{r}
-corels_juiced_tidy$dplyr_code
+corels_juiced_tidy$DT_code
 ```
 
 ### Alluvial plot
@@ -119,7 +120,14 @@ corels_juiced_tidy$dplyr_code
 We can also view an [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md) plot of the rules applied to the data they were derived from. The alluvial plot provides an intutivie left-to-right visual description of how the Corels rules are sequentially applied to arrive at the final classification.
 
 ```{r, out.width = "100%"}
-corels_juiced_tidy$alluvial_plot
+p <- corels_juiced_tidy$alluvial_DT %>% 
+  easyalluvial::alluvial_wide(stratum_width = 0.2) +
+    ggplot2::theme_minimal() +
+    ggplot2::labs(
+      title = "Corels if-then-else logic",
+      subtitle = " From truth (far left columun) to Corels classification (far right column)"
+    )
+p
 ```
 
 The leftmost column is the true label for each car, either automatic (0) or manual (1). The rightmost column is the Corels classification after applying the rules from left to right. 
@@ -133,7 +141,7 @@ p <- easyalluvial::alluvial_wide(corels_juiced_tidy$alluvial_df)
 
 parcats::parcats(p,
   marginal_histograms = TRUE,
-  data_input = corels_juiced_tidy$alluvial_df
+  data_input = corels_juiced_tidy$alluvial_DT
 )
 ```
 
@@ -149,10 +157,10 @@ We can also create a confusion matrix from the dataframe created for the alluvia
 
 ```{r}
 conf_matrix <-
-  corels_juiced_tidy$alluvial_df %>%
+  corels_juiced_tidy$alluvial_DT %>%
   yardstick::conf_mat(
     truth = "am_X1",
-    estimate = "corels_prediction"
+    estimate = "corels_pred"
   )
 
 ggplot2::autoplot(conf_matrix, "heatmap")
@@ -248,7 +256,7 @@ We can now run `tidycorels::tidy_corels()` function on the prepared diabetes tra
 
 ```{r}
 diabetes_train_model <-
-  tidycorels::tidy_corels(
+  tidy_corels(
     df = diabetes_train_preprocessed,
     outcome_cols = c("diabetes_X0", "diabetes_X1"),
     run_bfs = TRUE,
@@ -263,19 +271,26 @@ diabetes_train_model <-
 Here are the Corels rules for the diabetes data.
 
 ```{r}
-diabetes_train_model$corels_console_output[2:8]
+diabetes_train_model$corels_console_output
 ```
 
 And here are those rules converted to dplyr code.
 
 ```{r}
-diabetes_train_model$dplyr_code
+diabetes_train_model$DT_code
 ```
 
 The [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md) plot is also available.
 
 ```{r, out.width = "100%"}
-diabetes_train_model$alluvial_plot
+p <- diabetes_train_model$alluvial_DT %>% 
+  easyalluvial::alluvial_wide(stratum_width = 0.2) +
+    ggplot2::theme_minimal() +
+    ggplot2::labs(
+      title = "Corels if-then-else logic",
+      subtitle = " From truth (far left columun) to Corels classification (far right column)"
+    )
+p
 ```
 
 ### Performance on test data
@@ -293,9 +308,9 @@ Next we use the function `tidycorels::corels_predict()` to apply the rules creat
  
 ```{r}
 diabetes_test_predict <-
-  tidycorels::predict_corels(
+  predict_corels(
     model = diabetes_train_model,
-    new_df = diabetes_test_juiced
+    new = diabetes_test_juiced
   )
 ```
 
