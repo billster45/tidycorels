@@ -198,28 +198,12 @@ predict_corels <- function(model, new_df) {
 
   new_data <- base::deparse(base::substitute(new_df))
 
-  code <- paste0("df_pred <- ", new_data, " %>% ", model$dplyr_code)
+  code <- base::gsub(pattern = "DT", replacement = new_df,new_data$DT_Code)
 
   base::eval(base::parse(text = code))
 
-  # alluvial plot
-  base::eval(base::parse(text = model$alluvial_code))
-
-  alluvial_df <-
-    alluvial_df %>%
-    dplyr::mutate_all(as.factor)
-
-  alluvial_plot <-
-    alluvial_df %>%
-    easyalluvial::alluvial_wide(stratum_width = 0.2) +
-    ggplot2::theme_minimal() +
-    ggplot2::labs(
-      title = "Corels if-then-else logic",
-      subtitle = "From truth (far left columun) to Corels classification (far right column)"
-    )
-
   return(c(list(
-    df_pred = df_pred,
+    df_pred = new_data,
     alluvial_plot = alluvial_plot,
     alluvial_df = alluvial_df
   )))
