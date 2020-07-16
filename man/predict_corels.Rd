@@ -15,5 +15,5 @@ predict_corels(model, new_df)
 Applies the Corels rules in theR object returned by tidycorels::corels() to a new dataframe. For example, test data not used to create the Corels rules.
 }
 \examples{
-# See example in README.md (link here)
+# See https://github.com/billster45/tidycorels/blob/master/README.md
 }

@@ -23,48 +23,5 @@ The names of the two outcome columns in outcome_cols argument must end in 0 and 
 Consider using recipes::step_integer(recipes::all_outcomes(), zero_based = TRUE) to convert outcome values to 0/1 before using recipes::step_dummy() to create the two outcome columns Corels requires.
 }
 \examples{
-
-library(magrittr)
-# Using mtcars dataset and recipes, create binary predictors as Corels expects
-
-corels_pre_proc <-
-  recipes::recipe(am ~ .,
-                  data = datasets::mtcars
-  ) \%>\%
-  # discretise numeric variables into bins
-  recipes::step_discretize(mpg, disp, hp, drat, wt, qsec, min_unique = 1) \%>\%
-  recipes::step_mutate_at(recipes::all_predictors(), fn = list(~ as.factor(.))) \%>\%
-  # convert each value of each category into its own 0/1 binary column
-  recipes::step_dummy(recipes::all_predictors(), one_hot = TRUE) \%>\%
-  recipes::step_nzv(recipes::all_predictors()) \%>\%
-  # convert each value of the outcome into its own 0/1 binary column
-  # ensure outcome is 0/1 rather than words
-  recipes::step_integer(recipes::all_outcomes(), zero_based = TRUE) \%>\%
-  recipes::step_mutate_at(recipes::all_outcomes(), fn = list(~ as.factor(.))) \%>\%
-  recipes::step_dummy(recipes::all_outcomes(), one_hot = TRUE)
-
-#Create a pre-processed dataframe from the mtcars recipe above
-
-corels_juiced <-
-  corels_pre_proc \%>\%
-  recipes::prep() \%>\%
-  recipes::juice()
-
-# Run the tidy_corels() function
-
-  corels_juiced_tidy <-
-   tidycorels::tidy_corels(
-     df = corels_juiced,
-     outcome_cols = c("am_X0", "am_X1"),
-     run_bfs = TRUE,
-     calculate_size = TRUE,
-     run_curiosity = TRUE,
-     regularization = 0.01,
-     curiosity_policy = 3,
-     map_type = 1
-  )
-
-# View the alluvial plot of the Corels rules applied to df
-
-corels_juiced_tidy$alluvial_plot
+# See https://github.com/billster45/tidycorels/blob/master/README.md
 }

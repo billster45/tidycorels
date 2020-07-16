@@ -53,11 +53,13 @@ Finally, Corels requires the label column split into two columns representing ea
 library(tidymodels)
 library(corels)
 #library(tidycorels)
+library(data.table)
+source(file = "R/functions.R")
 library(kableExtra)
 library(easyalluvial)
 library(parcats)
 library(formattable)
-library(data.table)
+
 
 ## Using mtcars dataset and recipes, create binary predictors as Corels expects
 corels_pre_proc <-
@@ -91,7 +93,7 @@ All other arguments of `corels::corels()` are available to set, other than the f
 
 ```{r}
 corels_juiced_tidy <-
-  tidy_corels(
+  tidycorels::tidy_corels(
     df = corels_juiced,
     outcome_cols = c("am_X0", "am_X1"),
     run_bfs = TRUE,
@@ -310,7 +312,7 @@ Next we use the function `tidycorels::corels_predict()` to apply the rules creat
 diabetes_test_predict <-
   predict_corels(
     model = diabetes_train_model,
-    new = diabetes_test_juiced
+    new_df = diabetes_test_juiced
   )
 ```
 
@@ -318,11 +320,10 @@ Then plot a confusion matrix to assess the perfomrance of Corels rules on the te
 
 ```{r}
 conf_matrix <-
-  diabetes_test_predict$alluvial_df %>%
-  dplyr::mutate_all(as.factor) %>%
+  diabetes_test_predict$alluvial_DT %>%
   yardstick::conf_mat(
     truth = "diabetes_X1",
-    estimate = "corels_prediction"
+    estimate = "corels_pred"
   )
 
 ggplot2::autoplot(conf_matrix, "heatmap")
@@ -351,11 +352,11 @@ In contrast to the random forest model with variable importance values, the Core
 5. they are in the highest triceps bin (skin fold thickness).  
 
 ```{r, eval=FALSE}
-p <- easyalluvial::alluvial_wide(diabetes_test_predict$alluvial_df)
+p <- easyalluvial::alluvial_wide(diabetes_test_predict$alluvial_DT)
 
 parcats::parcats(p,
   marginal_histograms = FALSE,
-  data_input = diabetes_test_predict$alluvial_df, labelfont = 14
+  data_input = diabetes_test_predict$alluvial_DT, labelfont = 14
 )
 ```
 

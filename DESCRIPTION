@@ -7,7 +7,7 @@ Maintainer: The package maintainer <yourself@somewhere.net>
 Description: tidycorels makes it easier to use the R package corels.
 License: MIT + file LICENSE
 Imports:
- corels, dplyr, ggplot2, tidyselect, magrittr, stringi, stringr, easyalluvial, recipes
+ corels, data.table
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.0

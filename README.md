@@ -64,11 +64,13 @@ classify where 0 = automatic and 1 = manual gears.
 ``` r
 library(tidymodels)
 library(corels)
-library(tidycorels)
+#library(tidycorels)
+source(file = "R/functions.R")
 library(kableExtra)
 library(easyalluvial)
 library(parcats)
 library(formattable)
+library(data.table)
 
 ## Using mtcars dataset and recipes, create binary predictors as Corels expects
 corels_pre_proc <-
@@ -1518,7 +1520,7 @@ than the following that are fixed by `tidycorels::tidy_corels()`:
 
 ``` r
 corels_juiced_tidy <-
-  tidycorels::tidy_corels(
+  tidy_corels(
     df = corels_juiced,
     outcome_cols = c("am_X0", "am_X1"),
     run_bfs = TRUE,
@@ -1529,6 +1531,19 @@ corels_juiced_tidy <-
     map_type = 1
   )
 ```
+
+    ##  [1] "writing logs to: C:\\Users\\lexybill\\AppData\\Local\\Temp\\RtmpgzuIKN/for-train.txt-bfscurious_obj-with_prefix_perm_map-no_minor-removed=none-max_num_nodes=100000-c=0.0100000-v=minor-f=1000.txt"                 
+    ##  [2] ""                                                                                                                                                                                                                   
+    ##  [3] ""                                                                                                                                                                                                                   
+    ##  [4] "OPTIMAL RULE LIST"                                                                                                                                                                                                  
+    ##  [5] "if ({gear:X3}) then ({am:X0})"                                                                                                                                                                                      
+    ##  [6] "else if ({vs:X0}) then ({am:X1})"                                                                                                                                                                                   
+    ##  [7] "else if ({disp:bin1}) then ({am:X1})"                                                                                                                                                                               
+    ##  [8] "else ({am:X0})"                                                                                                                                                                                                     
+    ##  [9] ""                                                                                                                                                                                                                   
+    ## [10] "writing optimal rule list to: C:\\Users\\lexybill\\AppData\\Local\\Temp\\RtmpgzuIKN/for-train.txt-bfscurious_obj-with_prefix_perm_map-no_minor-removed=none-max_num_nodes=100000-c=0.0100000-v=minor-f=1000-opt.txt"
+    ## [11] ""                                                                                                                                                                                                                   
+    ## [12] "[1] TRUE"
 
 A list of useful objects is returned. First let’s view the rules
 captured from the console output of `corels::corels()`.
@@ -1543,13 +1558,13 @@ corels_juiced_tidy$corels_console_output[4:8]
     ## [4] "else if ({disp:bin1}) then ({am:X1})"
     ## [5] "else ({am:X0})"
 
-And see those rules converted to `dplyr::case_when()` code.
+And see those rules converted to data.table if-else code.
 
 ``` r
-corels_juiced_tidy$dplyr_code
+corels_juiced_tidy$DT_code
 ```
 
-    ## [1] "dplyr::mutate(corels_prediction = dplyr::case_when(  `gear_X3` == 1 ~ '0' ,  `vs_X0` == 1 ~ '1' ,  `disp_bin1` == 1 ~ '1' , TRUE ~ '0'))"
+    ## [1] "DT[,corels_pred := fifelse( `gear_X3` == 1, 0,fifelse( `vs_X0` == 1, 1,fifelse( `disp_bin1` == 1, 1,0)))]"
 
 ### Alluvial plot
 
@@ -1561,7 +1576,14 @@ how the Corels rules are sequentially applied to arrive at the final
 classification.
 
 ``` r
-corels_juiced_tidy$alluvial_plot
+p <- corels_juiced_tidy$alluvial_DT %>% 
+  easyalluvial::alluvial_wide(stratum_width = 0.2) +
+    ggplot2::theme_minimal() +
+    ggplot2::labs(
+      title = "Corels if-then-else logic",
+      subtitle = " From truth (far left columun) to Corels classification (far right column)"
+    )
+p
 ```
 
 <img src="README_files/figure-gfm/unnamed-chunk-7-1.png" width="100%" />
@@ -1584,7 +1606,7 @@ p <- easyalluvial::alluvial_wide(corels_juiced_tidy$alluvial_df)
 
 parcats::parcats(p,
   marginal_histograms = TRUE,
-  data_input = corels_juiced_tidy$alluvial_df
+  data_input = corels_juiced_tidy$alluvial_DT
 )
 ```
 
@@ -1600,10 +1622,10 @@ alluvial plot.
 
 ``` r
 conf_matrix <-
-  corels_juiced_tidy$alluvial_df %>%
+  corels_juiced_tidy$alluvial_DT %>%
   yardstick::conf_mat(
     truth = "am_X1",
-    estimate = "corels_prediction"
+    estimate = "corels_pred"
   )
 
 ggplot2::autoplot(conf_matrix, "heatmap")
@@ -3433,7 +3455,7 @@ diabetes training data.
 
 ``` r
 diabetes_train_model <-
-  tidycorels::tidy_corels(
+  tidy_corels(
     df = diabetes_train_preprocessed,
     outcome_cols = c("diabetes_X0", "diabetes_X1"),
     run_bfs = TRUE,
@@ -3445,34 +3467,59 @@ diabetes_train_model <-
   )
 ```
 
+    ##  [1] ""                                                                                                                                                                                                                   
+    ##  [2] "OPTIMAL RULE LIST"                                                                                                                                                                                                  
+    ##  [3] "if ({age:bin1}) then ({diabetes:X0})"                                                                                                                                                                               
+    ##  [4] "else if ({glucose:bin4}) then ({diabetes:X1})"                                                                                                                                                                      
+    ##  [5] "else if ({insulin:bin1}) then ({diabetes:X0})"                                                                                                                                                                      
+    ##  [6] "else if ({pedigree:bin1}) then ({diabetes:X0})"                                                                                                                                                                     
+    ##  [7] "else if ({triceps:bin4}) then ({diabetes:X1})"                                                                                                                                                                      
+    ##  [8] "else ({diabetes:X0})"                                                                                                                                                                                               
+    ##  [9] ""                                                                                                                                                                                                                   
+    ## [10] "writing optimal rule list to: C:\\Users\\lexybill\\AppData\\Local\\Temp\\RtmpgzuIKN/for-train.txt-bfscurious_obj-with_prefix_perm_map-no_minor-removed=none-max_num_nodes=100000-c=0.0100000-v=minor-f=1000-opt.txt"
+    ## [11] ""                                                                                                                                                                                                                   
+    ## [12] "[1] TRUE"
+
 Here are the Corels rules for the diabetes data.
 
 ``` r
-diabetes_train_model$corels_console_output[2:8]
+diabetes_train_model$corels_console_output
 ```
 
-    ## [1] "OPTIMAL RULE LIST"                             
-    ## [2] "if ({age:bin1}) then ({diabetes:X0})"          
-    ## [3] "else if ({glucose:bin4}) then ({diabetes:X1})" 
-    ## [4] "else if ({insulin:bin1}) then ({diabetes:X0})" 
-    ## [5] "else if ({pedigree:bin1}) then ({diabetes:X0})"
-    ## [6] "else if ({triceps:bin4}) then ({diabetes:X1})" 
-    ## [7] "else ({diabetes:X0})"
+    ##  [1] ""                                                                                                                                                                                                                   
+    ##  [2] "OPTIMAL RULE LIST"                                                                                                                                                                                                  
+    ##  [3] "if ({age:bin1}) then ({diabetes:X0})"                                                                                                                                                                               
+    ##  [4] "else if ({glucose:bin4}) then ({diabetes:X1})"                                                                                                                                                                      
+    ##  [5] "else if ({insulin:bin1}) then ({diabetes:X0})"                                                                                                                                                                      
+    ##  [6] "else if ({pedigree:bin1}) then ({diabetes:X0})"                                                                                                                                                                     
+    ##  [7] "else if ({triceps:bin4}) then ({diabetes:X1})"                                                                                                                                                                      
+    ##  [8] "else ({diabetes:X0})"                                                                                                                                                                                               
+    ##  [9] ""                                                                                                                                                                                                                   
+    ## [10] "writing optimal rule list to: C:\\Users\\lexybill\\AppData\\Local\\Temp\\RtmpgzuIKN/for-train.txt-bfscurious_obj-with_prefix_perm_map-no_minor-removed=none-max_num_nodes=100000-c=0.0100000-v=minor-f=1000-opt.txt"
+    ## [11] ""                                                                                                                                                                                                                   
+    ## [12] "[1] TRUE"
 
 And here are those rules converted to dplyr code.
 
 ``` r
-diabetes_train_model$dplyr_code
+diabetes_train_model$DT_code
 ```
 
-    ## [1] "dplyr::mutate(corels_prediction = dplyr::case_when(  `age_bin1` == 1 ~ '0' ,  `glucose_bin4` == 1 ~ '1' ,  `insulin_bin1` == 1 ~ '0' ,  `pedigree_bin1` == 1 ~ '0' ,  `triceps_bin4` == 1 ~ '1' , TRUE ~ '0'))"
+    ## [1] "DT[,corels_pred := fifelse( `age_bin1` == 1, 0,fifelse( `glucose_bin4` == 1, 1,fifelse( `insulin_bin1` == 1, 0,fifelse( `pedigree_bin1` == 1, 0,fifelse( `triceps_bin4` == 1, 1,0)))))]"
 
 The
 [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md)
 plot is also available.
 
 ``` r
-diabetes_train_model$alluvial_plot
+p <- diabetes_train_model$alluvial_DT %>% 
+  easyalluvial::alluvial_wide(stratum_width = 0.2) +
+    ggplot2::theme_minimal() +
+    ggplot2::labs(
+      title = "Corels if-then-else logic",
+      subtitle = " From truth (far left columun) to Corels classification (far right column)"
+    )
+p
 ```
 
 <img src="README_files/figure-gfm/unnamed-chunk-18-1.png" width="100%" />
@@ -3495,7 +3542,7 @@ rules created on the training data to the test data.
 
 ``` r
 diabetes_test_predict <-
-  tidycorels::predict_corels(
+  predict_corels(
     model = diabetes_train_model,
     new_df = diabetes_test_juiced
   )
@@ -3506,11 +3553,10 @@ on the test data.
 
 ``` r
 conf_matrix <-
-  diabetes_test_predict$alluvial_df %>%
-  dplyr::mutate_all(as.factor) %>%
+  diabetes_test_predict$alluvial_DT %>%
   yardstick::conf_mat(
     truth = "diabetes_X1",
-    estimate = "corels_prediction"
+    estimate = "corels_pred"
   )
 
 ggplot2::autoplot(conf_matrix, "heatmap")
@@ -3643,11 +3689,11 @@ to have diabetes are also correctly classified. We can see they are,
 <!-- end list -->
 
 ``` r
-p <- easyalluvial::alluvial_wide(diabetes_test_predict$alluvial_df)
+p <- easyalluvial::alluvial_wide(diabetes_test_predict$alluvial_DT)
 
 parcats::parcats(p,
   marginal_histograms = FALSE,
-  data_input = diabetes_test_predict$alluvial_df, labelfont = 14
+  data_input = diabetes_test_predict$alluvial_DT, labelfont = 14
 )
 ```
 

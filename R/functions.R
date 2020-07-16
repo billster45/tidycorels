@@ -4,7 +4,6 @@
 #' @param cols a list of the columns in the data frame to convert
 #' @param txt_file the name of the text file
 #' @return the data frame as a text file
-#' @importFrom magrittr %>%
 #' @keywords internal
 #' @noRd
 write_to_txt_file <- function(DT, cols, txt_file) {
@@ -12,7 +11,7 @@ write_to_txt_file <- function(DT, cols, txt_file) {
 
   for (col in cols) {
 
-    single_col <- DT[, ..col] # select one column
+    single_col <- DT[, col, with = FALSE] # select one column https://stackoverflow.com/a/12392269
 
     single_col_char <- base::as.character(single_col) # convert column to a single character string
 
@@ -102,20 +101,20 @@ capture_corels <- function(corels_output, outcome_cols) {
 #' @param df The dataframe to generate rules from. Applies the function corels::corels().
 #' @param outcome_cols The two columns in df that represent the label. Corels expects two columns representing each class. Consider using recipes::step_dummy() to convert outcome to two columns.
 #' @param ... Set any of the arguments imported from corels::corels(). The following arguments are fixed by tidy_corels(): rules_file (generated from df), labels_file (generated from df), log_dir (set as tempdir()), verbosity_policy (set as "minor").
-#' @importFrom magrittr %>%
 #' @export
 #' @examples
+#' # See https://github.com/billster45/tidycorels/blob/master/README.md
 tidy_corels <- function(df, outcome_cols, ...) {
+
+  alluvial_DT <- NULL
 
   DT <- data.table::setDT(df)
 
-  df_pred <- NULL
-  corels_prediction <- NULL
-
-  tempdir <- tempdir()
+  tempdir <- getwd()
 
   # extract only the names of df predictor columns
-  pred_cols <- base::colnames(DT[, -..outcome_cols])
+  pred_cols <- base::colnames(DT)
+  pred_cols <- pred_cols[pred_cols != outcome_cols ]
 
   # write only df predictor columns to a training text file
   train_text_file <- paste0(tempdir, "/train.txt")
@@ -135,18 +134,14 @@ tidy_corels <- function(df, outcome_cols, ...) {
   )
 
   # use text files in corels to make prediction
-  logdir <- tempdir()
-
-  #  corels_console_output <-
   corels_output <-
     utils::capture.output({ # capture output to convert into code
       corels::corels(
         rules_file = train_text_file,
         labels_file = label_text_file,
-        log_dir = logdir,
-        verbosity_policy = "minor"
-        #,
-        #...
+        log_dir = tempdir,
+        verbosity_policy = "minor",
+        ...
       )
     })
 
@@ -192,19 +187,33 @@ tidy_corels <- function(df, outcome_cols, ...) {
 #' @param new_df A new dataframe to apply corels rules to and generate a classification.
 #' @export
 #' @examples
-#' # See example in README.md (link here)
+#' # See https://github.com/billster45/tidycorels/blob/master/README.md
 predict_corels <- function(model, new_df) {
-  df_pred <- NULL
 
-  new_data <- base::deparse(base::substitute(new_df))
+  alluvial_DT <- NULL
 
-  code <- base::gsub(pattern = "DT", replacement = new_df,new_data$DT_Code)
+  df_name <- base::deparse(base::substitute(new_df)) #https://stackoverflow.com/a/45176503
+
+  new_df <- data.table::setDT(new_df)
+
+  code <- base::gsub(pattern = "DT\\[", replacement = base::paste0(df_name,"\\["), model$DT_code)
 
   base::eval(base::parse(text = code))
 
+  cols <- colnames(model$alluvial_DT)
+
+  # alluvial data frame
+  corels_predictors <- paste(cols, collapse = ",") # collapse
+  corels_predictors <- paste0("alluvial_DT <-",df_name,"[, .(",corels_predictors,")]")
+
+  # apply DT code to the data frame
+  base::eval(base::parse(text = corels_predictors)) # execute the DT code to create alluvial_DT
+  # set all columns as factors for good plotting
+   for(col in colnames(alluvial_DT))
+     data.table::set(alluvial_DT, j = col, value = as.factor(alluvial_DT[[col]]))
+
   return(c(list(
-    df_pred = new_data,
-    alluvial_plot = alluvial_plot,
-    alluvial_df = alluvial_df
+    new_df = new_df,
+   alluvial_DT = alluvial_DT
   )))
 }
