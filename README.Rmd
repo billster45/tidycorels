@@ -52,9 +52,9 @@ Finally, Corels requires the label column split into two columns representing ea
 ```{r}
 library(tidymodels)
 library(corels)
-#library(tidycorels)
-library(data.table)
-source(file = "R/functions.R")
+library(tidycorels)
+# library(data.table)
+# source(file = "R/functions.R")
 library(kableExtra)
 library(easyalluvial)
 library(parcats)

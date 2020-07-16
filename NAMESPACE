@@ -2,3 +2,4 @@
 
 export(predict_corels)
 export(tidy_corels)
+import(data.table)

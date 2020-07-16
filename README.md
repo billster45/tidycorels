@@ -64,13 +64,14 @@ classify where 0 = automatic and 1 = manual gears.
 ``` r
 library(tidymodels)
 library(corels)
-#library(tidycorels)
-source(file = "R/functions.R")
+library(tidycorels)
+# library(data.table)
+# source(file = "R/functions.R")
 library(kableExtra)
 library(easyalluvial)
 library(parcats)
 library(formattable)
-library(data.table)
+
 
 ## Using mtcars dataset and recipes, create binary predictors as Corels expects
 corels_pre_proc <-
@@ -1520,7 +1521,7 @@ than the following that are fixed by `tidycorels::tidy_corels()`:
 
 ``` r
 corels_juiced_tidy <-
-  tidy_corels(
+  tidycorels::tidy_corels(
     df = corels_juiced,
     outcome_cols = c("am_X0", "am_X1"),
     run_bfs = TRUE,
@@ -1532,17 +1533,17 @@ corels_juiced_tidy <-
   )
 ```
 
-    ##  [1] "writing logs to: C:\\Users\\lexybill\\AppData\\Local\\Temp\\RtmpgzuIKN/for-train.txt-bfscurious_obj-with_prefix_perm_map-no_minor-removed=none-max_num_nodes=100000-c=0.0100000-v=minor-f=1000.txt"                 
-    ##  [2] ""                                                                                                                                                                                                                   
-    ##  [3] ""                                                                                                                                                                                                                   
-    ##  [4] "OPTIMAL RULE LIST"                                                                                                                                                                                                  
-    ##  [5] "if ({gear:X3}) then ({am:X0})"                                                                                                                                                                                      
-    ##  [6] "else if ({vs:X0}) then ({am:X1})"                                                                                                                                                                                   
-    ##  [7] "else if ({disp:bin1}) then ({am:X1})"                                                                                                                                                                               
-    ##  [8] "else ({am:X0})"                                                                                                                                                                                                     
-    ##  [9] ""                                                                                                                                                                                                                   
-    ## [10] "writing optimal rule list to: C:\\Users\\lexybill\\AppData\\Local\\Temp\\RtmpgzuIKN/for-train.txt-bfscurious_obj-with_prefix_perm_map-no_minor-removed=none-max_num_nodes=100000-c=0.0100000-v=minor-f=1000-opt.txt"
-    ## [11] ""                                                                                                                                                                                                                   
+    ##  [1] "writing logs to: C:/Users/lexybill/OneDrive/tidycorels/for-train.txt-bfscurious_obj-with_prefix_perm_map-no_minor-removed=none-max_num_nodes=100000-c=0.0100000-v=minor-f=1000.txt"                 
+    ##  [2] ""                                                                                                                                                                                                   
+    ##  [3] ""                                                                                                                                                                                                   
+    ##  [4] "OPTIMAL RULE LIST"                                                                                                                                                                                  
+    ##  [5] "if ({gear:X3}) then ({am:X0})"                                                                                                                                                                      
+    ##  [6] "else if ({vs:X0}) then ({am:X1})"                                                                                                                                                                   
+    ##  [7] "else if ({disp:bin1}) then ({am:X1})"                                                                                                                                                               
+    ##  [8] "else ({am:X0})"                                                                                                                                                                                     
+    ##  [9] ""                                                                                                                                                                                                   
+    ## [10] "writing optimal rule list to: C:/Users/lexybill/OneDrive/tidycorels/for-train.txt-bfscurious_obj-with_prefix_perm_map-no_minor-removed=none-max_num_nodes=100000-c=0.0100000-v=minor-f=1000-opt.txt"
+    ## [11] ""                                                                                                                                                                                                   
     ## [12] "[1] TRUE"
 
 A list of useful objects is returned. First let’s view the rules
@@ -3467,17 +3468,17 @@ diabetes_train_model <-
   )
 ```
 
-    ##  [1] ""                                                                                                                                                                                                                   
-    ##  [2] "OPTIMAL RULE LIST"                                                                                                                                                                                                  
-    ##  [3] "if ({age:bin1}) then ({diabetes:X0})"                                                                                                                                                                               
-    ##  [4] "else if ({glucose:bin4}) then ({diabetes:X1})"                                                                                                                                                                      
-    ##  [5] "else if ({insulin:bin1}) then ({diabetes:X0})"                                                                                                                                                                      
-    ##  [6] "else if ({pedigree:bin1}) then ({diabetes:X0})"                                                                                                                                                                     
-    ##  [7] "else if ({triceps:bin4}) then ({diabetes:X1})"                                                                                                                                                                      
-    ##  [8] "else ({diabetes:X0})"                                                                                                                                                                                               
-    ##  [9] ""                                                                                                                                                                                                                   
-    ## [10] "writing optimal rule list to: C:\\Users\\lexybill\\AppData\\Local\\Temp\\RtmpgzuIKN/for-train.txt-bfscurious_obj-with_prefix_perm_map-no_minor-removed=none-max_num_nodes=100000-c=0.0100000-v=minor-f=1000-opt.txt"
-    ## [11] ""                                                                                                                                                                                                                   
+    ##  [1] ""                                                                                                                                                                                                   
+    ##  [2] "OPTIMAL RULE LIST"                                                                                                                                                                                  
+    ##  [3] "if ({age:bin1}) then ({diabetes:X0})"                                                                                                                                                               
+    ##  [4] "else if ({glucose:bin4}) then ({diabetes:X1})"                                                                                                                                                      
+    ##  [5] "else if ({insulin:bin1}) then ({diabetes:X0})"                                                                                                                                                      
+    ##  [6] "else if ({pedigree:bin1}) then ({diabetes:X0})"                                                                                                                                                     
+    ##  [7] "else if ({triceps:bin4}) then ({diabetes:X1})"                                                                                                                                                      
+    ##  [8] "else ({diabetes:X0})"                                                                                                                                                                               
+    ##  [9] ""                                                                                                                                                                                                   
+    ## [10] "writing optimal rule list to: C:/Users/lexybill/OneDrive/tidycorels/for-train.txt-bfscurious_obj-with_prefix_perm_map-no_minor-removed=none-max_num_nodes=100000-c=0.0100000-v=minor-f=1000-opt.txt"
+    ## [11] ""                                                                                                                                                                                                   
     ## [12] "[1] TRUE"
 
 Here are the Corels rules for the diabetes data.
@@ -3486,17 +3487,17 @@ Here are the Corels rules for the diabetes data.
 diabetes_train_model$corels_console_output
 ```
 
-    ##  [1] ""                                                                                                                                                                                                                   
-    ##  [2] "OPTIMAL RULE LIST"                                                                                                                                                                                                  
-    ##  [3] "if ({age:bin1}) then ({diabetes:X0})"                                                                                                                                                                               
-    ##  [4] "else if ({glucose:bin4}) then ({diabetes:X1})"                                                                                                                                                                      
-    ##  [5] "else if ({insulin:bin1}) then ({diabetes:X0})"                                                                                                                                                                      
-    ##  [6] "else if ({pedigree:bin1}) then ({diabetes:X0})"                                                                                                                                                                     
-    ##  [7] "else if ({triceps:bin4}) then ({diabetes:X1})"                                                                                                                                                                      
-    ##  [8] "else ({diabetes:X0})"                                                                                                                                                                                               
-    ##  [9] ""                                                                                                                                                                                                                   
-    ## [10] "writing optimal rule list to: C:\\Users\\lexybill\\AppData\\Local\\Temp\\RtmpgzuIKN/for-train.txt-bfscurious_obj-with_prefix_perm_map-no_minor-removed=none-max_num_nodes=100000-c=0.0100000-v=minor-f=1000-opt.txt"
-    ## [11] ""                                                                                                                                                                                                                   
+    ##  [1] ""                                                                                                                                                                                                   
+    ##  [2] "OPTIMAL RULE LIST"                                                                                                                                                                                  
+    ##  [3] "if ({age:bin1}) then ({diabetes:X0})"                                                                                                                                                               
+    ##  [4] "else if ({glucose:bin4}) then ({diabetes:X1})"                                                                                                                                                      
+    ##  [5] "else if ({insulin:bin1}) then ({diabetes:X0})"                                                                                                                                                      
+    ##  [6] "else if ({pedigree:bin1}) then ({diabetes:X0})"                                                                                                                                                     
+    ##  [7] "else if ({triceps:bin4}) then ({diabetes:X1})"                                                                                                                                                      
+    ##  [8] "else ({diabetes:X0})"                                                                                                                                                                               
+    ##  [9] ""                                                                                                                                                                                                   
+    ## [10] "writing optimal rule list to: C:/Users/lexybill/OneDrive/tidycorels/for-train.txt-bfscurious_obj-with_prefix_perm_map-no_minor-removed=none-max_num_nodes=100000-c=0.0100000-v=minor-f=1000-opt.txt"
+    ## [11] ""                                                                                                                                                                                                   
     ## [12] "[1] TRUE"
 
 And here are those rules converted to dplyr code.

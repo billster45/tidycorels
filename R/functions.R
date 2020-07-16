@@ -1,41 +1,33 @@
 #' write_to_txt_file
 #' converts columns of a dataframe to a textfile in the format corels can use
 #' @param DT name of the dataframe to convert
-#' @param cols a list of the columns in the data frame to convert
 #' @param txt_file the name of the text file
 #' @return the data frame as a text file
+#' @import data.table
 #' @keywords internal
 #' @noRd
-write_to_txt_file <- function(DT, cols, txt_file) {
+write_to_txt_file <- function(dt,txt_file) {
+  # https://github.com/Rdatatable/data.table/issues/2053 making sure @imports data.table is present
+  vars <- NULL
+
   file.create(txt_file) # create a blank text file
 
-  for (col in cols) {
+  dt <- data.table::transpose(dt, keep.names = "vars") # reshape long to wide
 
-    single_col <- DT[, col, with = FALSE] # select one column https://stackoverflow.com/a/12392269
+  dt <- data.table::setDT(dt)
 
-    single_col_char <- base::as.character(single_col) # convert column to a single character string
+  dt[, vars := gsub("[_]",":",vars)] # replace under score with ':'
 
-    single_col_char <- base::gsub(pattern = "[\r\n,c()]",
-                                  replacement = "",
-                                  x= single_col_char) # replace any text other than the values
+  dt[, vars := paste0("{", vars, "}")] # put curly brackest around the variable name
 
-    name <- base::colnames(single_col) # use the column name to label the character string in the format Corels epxects
-    name <- base::gsub(pattern = "[_]",
-                       replacement = ":",
-                       x = name)
+  data.table::fwrite(x = dt, file = txt_file, sep = " ", col.names = FALSE) # write to text file
 
-    final <- base::paste0("{", name, "}", " ", single_col_char) # append the column name to the column values
-
-    base::write(x = final,
-                file = txt_file,
-                append = TRUE) # finally append to the text file
-  }
 }
 
 #' capture_corels
 #' converts captured corels output to dplyr::Case_when() code
 #' @param corels_output corels captured output
-#' @param outcome_cols
+#' @param outcome_cols the outcome columns
 #' @return the corels rules as DT code
 #' @keywords internal
 #' @noRd
@@ -108,28 +100,31 @@ tidy_corels <- function(df, outcome_cols, ...) {
 
   alluvial_DT <- NULL
 
-  DT <- data.table::setDT(df)
+  outs <- df[,outcome_cols]
+  preds <- df[ , !(names(df) %in% outcome_cols)]
+
+  out_DT <- data.table::setDT(outs)
+  preds_DT <- data.table::setDT(preds)
 
   tempdir <- getwd()
 
-  # extract only the names of df predictor columns
-  pred_cols <- base::colnames(DT)
-  pred_cols <- pred_cols[pred_cols != outcome_cols ]
-
   # write only df predictor columns to a training text file
+  #pred_cols <- DT[, paste0(outcome_cols):=NULL]
+
   train_text_file <- paste0(tempdir, "/train.txt")
 
   write_to_txt_file(
-    DT = DT,
-    cols = pred_cols,
+    dt = preds_DT,
     txt_file = train_text_file
   )
 
   # write only the two label columns to a text file
   label_text_file <- paste0(tempdir, "/labels.txt")
+
+  #out_cols <- DT[, ..outcome_cols]
+
   write_to_txt_file(
-    DT = DT,
-    cols = outcome_cols,
+    dt = out_DT,
     txt_file = label_text_file
   )
 
@@ -147,6 +142,8 @@ tidy_corels <- function(df, outcome_cols, ...) {
 
   #print the normal corels output to the console
   print(corels_output)
+
+  DT <- data.table::setDT(df)
 
   # convert rules to dplyr::case_when() logic
   DT_code <- capture_corels(corels_output = corels_output,
@@ -167,17 +164,12 @@ tidy_corels <- function(df, outcome_cols, ...) {
   for(col in colnames(alluvial_DT))
     data.table::set(alluvial_DT, j = col, value = as.factor(alluvial_DT[[col]]))
 
-  # read in text files from temp directory to output too
-  train_txt <- utils::read.table(train_text_file)
-  label_txt <- utils::read.table(label_text_file)
-
   return(c(list(
-    DT_pred = DT,
+    DT_pred = data.table::setDF(DT),
     corels_console_output = corels_output,
     DT_code = DT_code,
-    alluvial_DT = alluvial_DT,
-    train_text_file = train_txt,
-    label_text_file = label_txt)))
+    alluvial_DT = data.table::setDF(alluvial_DT)
+)))
 }
 
 #' predict_corels
@@ -213,7 +205,7 @@ predict_corels <- function(model, new_df) {
      data.table::set(alluvial_DT, j = col, value = as.factor(alluvial_DT[[col]]))
 
   return(c(list(
-    new_df = new_df,
-   alluvial_DT = alluvial_DT
+    new_df = data.table::setDF(new_df),
+   alluvial_DT = data.table::setDF(alluvial_DT)
   )))
 }
