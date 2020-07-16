@@ -95,7 +95,7 @@ capture_corels <- function(corels_output, outcome_cols) {
 #' @param ... Set any of the arguments imported from corels::corels(). The following arguments are fixed by tidy_corels(): rules_file (generated from df), labels_file (generated from df), log_dir (set as tempdir()), verbosity_policy (set as "minor").
 #' @export
 #' @examples
-#' # See https://github.com/billster45/tidycorels/blob/master/README.md
+#' # See <https://github.com/billster45/tidycorels/blob/master/README.md>
 tidy_corels <- function(df, outcome_cols, ...) {
 
   alluvial_DT <- NULL
@@ -179,7 +179,7 @@ tidy_corels <- function(df, outcome_cols, ...) {
 #' @param new_df A new dataframe to apply corels rules to and generate a classification.
 #' @export
 #' @examples
-#' # See https://github.com/billster45/tidycorels/blob/master/README.md
+#' # See <https://github.com/billster45/tidycorels/blob/master/README.md>
 predict_corels <- function(model, new_df) {
 
   alluvial_DT <- NULL

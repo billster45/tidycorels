@@ -23,5 +23,5 @@ The names of the two outcome columns in outcome_cols argument must end in 0 and 
 Consider using recipes::step_integer(recipes::all_outcomes(), zero_based = TRUE) to convert outcome values to 0/1 before using recipes::step_dummy() to create the two outcome columns Corels requires.
 }
 \examples{
-# See https://github.com/billster45/tidycorels/blob/master/README.md
+# See <https://github.com/billster45/tidycorels/blob/master/README.md>
 }
