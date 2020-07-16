@@ -2,4 +2,4 @@
 
 export(predict_corels)
 export(tidy_corels)
-importFrom(magrittr,"%>%")
+import(data.table)
