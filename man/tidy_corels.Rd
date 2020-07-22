@@ -4,24 +4,36 @@
 \alias{tidy_corels}
 \title{tidy_corels}
 \usage{
-tidy_corels(df, outcome_cols, ...)
+tidy_corels(df, label_cols, value_delim = "_", ...)
 }
 \arguments{
 \item{df}{The dataframe to generate rules from. Applies the function corels::corels().}
 
-\item{outcome_cols}{The two columns in df that represent the label. Corels expects two columns representing each class. Consider using recipes::step_dummy() to convert outcome to two columns.}
+\item{label_cols}{The two columns in df that represent the label. Corels expects two columns representing each class. Consider using recipes::step_dummy() to convert outcome to two columns.}
 
-\item{...}{Set any of the arguments imported from corels::corels(). The following arguments are fixed by tidy_corels(): rules_file (generated from df), labels_file (generated from df), log_dir (set as tempdir()), verbosity_policy (set as "minor").}
+\item{value_delim}{the delimiter to mark where the value of the 0/1 binary feature appears in the column name. Default value is underscore "_" as this is used by recipes::step_dummy() when creating dummy columns.}
+
+\item{...}{Set any of the arguments imported from corels::corels(). The following arguments are fixed by tidy_corels(): rules_file and labels_file (both generated from the dataframe supplied to the df argument), log_dir (set as your current working directory), verbosity_policy (set as "minor").}
 }
 \description{
-The tidy_corels() function converts your dataframe into the text file format corels::corels() expects. Returns a list of R objects including: both the Corels rules and converted to dplyr::case_when() format, your datafame with the label geneated by the rules, an alluvial plot of the rules applied to your dataframe.
+The tidy_corels() function converts your dataframe into the text file format corels::corels() expects and returns a list of useful R objects.
 }
 \details{
+The function returns your dataframe with the corels rules applied by adding the column "corels_label".
+
+Returns the Corels rules from the console output of corels::corels().
+
+Returns those rules converted to data.table::fifelse() code (corels_rules_DT).
+
+Returns a dataframe of only the true label, the columns used in the rules, and the corels classification applied to your dataframe (alluvial). This dataframe is intended to be used in an easyalluvial plot \url{https://github.com/erblast/easyalluvial/blob/master/README.md}.
+
 All variables must contain 0 or 1. Consider using recipes::step_dummy() to convert categorical variables to dummy columns. If variable is continous (e.g. age), consider using recipes::step_discretize() before recipes::step_dummy().
 
-The names of the two outcome columns in outcome_cols argument must end in 0 and 1.
+The names of the two outcome columns in label_cols argument must end in 0 and 1.
+
 Consider using recipes::step_integer(recipes::all_outcomes(), zero_based = TRUE) to convert outcome values to 0/1 before using recipes::step_dummy() to create the two outcome columns Corels requires.
-}
-\examples{
-# See <https://github.com/billster45/tidycorels/blob/master/README.md>
+
+To apply the corels rules created to a new dataframe, see \code{\link[tidycorels]{predict_corels}}.
+
+\strong{Example}: \url{https://github.com/billster45/tidycorels/blob/master/README.md}
 }

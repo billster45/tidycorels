@@ -1,17 +1,16 @@
 tidycorels
 ================
 
-  - [What is corels and tidycorels?](#what-is-corels-and-tidycorels)
+  - [What are corels and tidycorels?](#what-are-corels-and-tidycorels)
   - [Installation](#installation)
   - [An example](#an-example)
   - [Prepare dataframe for Corels](#prepare-dataframe-for-corels)
   - [Run tidycorels](#run-tidycorels)
   - [Performance on test data](#performance-on-test-data)
-  - [Alluvial plot](#alluvial-plot)
 
 <img src="./images/train_alluvial.svg" width="80%" />
 
-## What is corels and tidycorels?
+## What are corels and tidycorels?
 
 > Corels are [‘Certifiably Optimal RulE
 > ListS’](https://corels.eecs.harvard.edu/). They are short and simple
@@ -19,23 +18,24 @@ tidycorels
 > created on categorical data.
 
 `tidycorels::tidy_corels()` converts your dataframe into two text files
-in the format that the R package
+that are in the format the R package
 [corels](https://cran.r-project.org/package=corels) expects. It returns
 the Corels rules converted to `data.table` code and applies them to your
 dataframe.
 
-Another dataframe is returned that includes only the true label, the
-columns used in the rules, and the classification by corels. This
-dataframe is created to be used in an insightful
+Your dataframe is also returned with fewer columns ready to be used in
+an insightful
 [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md)
-plot showing you visually how the rules are applied.
+plot revealing visually and intuitively both how the rules are applied
+and where thhe classification is correct or incorrect. This dataframe
+only includes the true label, the columns used in the Corels rules, and
+the classification label.
 
 `tidycorels::predict_corels()` applies the `data.table` rules to a new
-dataframe (e.g. test data). It also returns a data frame that works well
-with an
+dataframe (e.g. test data). It also returns the smaller data frame
+intended for an
 [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md)
-plot letting you inspect the correct and incorrect classificiations
-visually and intuitively.
+plot.
 
 ## Installation
 
@@ -65,7 +65,7 @@ kable_table <- function(table, title) {
 }
 ```
 
-In this example, we re-use the exact `recipes` data preperation steps
+In this example, we re-use the exact `recipes` data preparation steps
 from the excellent tidymodels walkthrough by [Rebecca
 Barter](http://www.rebeccabarter.com/blog/2020-03-25_machine_learning/)
 
@@ -460,9 +460,7 @@ datasets.
 
 ``` r
 set.seed(234589)
-diabetes_split <- rsample::initial_split(diabetes_clean,
-  prop = 3 / 4
-)
+diabetes_split <- rsample::initial_split(diabetes_clean,prop = 3 / 4)
 
 diabetes_train <- rsample::training(diabetes_split)
 diabetes_test <- rsample::testing(diabetes_split)
@@ -470,59 +468,64 @@ diabetes_test <- rsample::testing(diabetes_split)
 
 ## Prepare dataframe for Corels
 
-We now apply the same `recipe` steps as Rebecca, but with the additional
+We now apply the same `recipe` steps as Rebecca, but with additional
 step to
 [discretise](https://recipes.tidymodels.org/reference/step_discretize.html)
-the continous variables. Then each bin in each column is given its own
+the continuous variables, then each categorsied value is given its own
 0/1 binary column using
 [`recipes::step_dummy()`](https://recipes.tidymodels.org/reference/step_dummy.html).
 This is sometimes called one-hot encoding.
 
-Finally, Corels requires the label column `diabetes` is split into two
-columns representing each class. We do this by first ensuring the values
-are 0 and 1, then using using `recipes::step_integer()` followed by
+Finally, Corels requires the label column (`diabetes`) to be split into
+two columns representing each class. First we ensure the values in the
+label are 0 and 1 instead of words (using `recipes::step_integer()`),
+then use
 [`recipes::step_dummy()`](https://recipes.tidymodels.org/reference/step_dummy.html)
 to create the two label columns.
 
 ``` r
 diabetes_recipe <-
-  recipes::recipe(diabetes ~ pregnant + glucose + pressure + triceps +
-    insulin + mass + pedigree + age,
-  data = diabetes_clean
+  recipes::recipe(diabetes ~ .,
+    data = diabetes_train
   ) %>%
   recipes::step_normalize(all_numeric()) %>%
   recipes::step_knnimpute(all_predictors()) %>%
-  # discretise numeric variables into bins
-  recipes::step_discretize(pregnant, glucose, pressure, triceps, insulin, mass, pedigree, age, min_unique = 1) %>%
+  # discretise predictors into bins
+  recipes::step_discretize(-recipes::all_outcomes(), min_unique = 1) %>%
   recipes::step_mutate_at(recipes::all_predictors(), fn = list(~ as.factor(.))) %>%
-  recipes::step_mutate_at(recipes::all_outcomes(), fn = list(~ as.factor(.))) %>%
   recipes::step_dummy(recipes::all_predictors(), one_hot = TRUE) %>% # one-hot encode all discretised predictors
-  recipes::step_nzv(recipes::all_predictors()) %>%
   recipes::step_integer(recipes::all_outcomes(), zero_based = TRUE) %>% # ensure outcome is 0/1 rather than words
   recipes::step_mutate_at(recipes::all_outcomes(), fn = list(~ as.factor(.))) %>%
   recipes::step_dummy(recipes::all_outcomes(), one_hot = TRUE)
 
-diabetes_train_preprocessed <-
-  diabetes_recipe %>%
-  # apply the recipe to the training data
-  recipes::prep(diabetes_train) %>%
-  # extract the pre-processed training dataset
-  recipes::juice()
+# Train the data recipe on the training data
+diabetes_trained_rec <- recipes::prep(diabetes_recipe, training = diabetes_train)
 
-kable_table(head(diabetes_train_preprocessed, 5), title = "diabetes data - juiced")
+# Apply the trained data recipe to both the training and test data
+diabetes_train_preprocessed <- recipes::bake(diabetes_trained_rec, new_data = diabetes_train)
+diabetes_test_preprocessed <- recipes::bake(diabetes_trained_rec, new_data = diabetes_test)
+
+# View the proccessed trained data
+kable_table(head(diabetes_train_preprocessed, 5), title = "diabetes training data preprocessed")
 ```
 
 <table class="table table-striped table-condensed" style="width: auto !important; ">
 
 <caption>
 
-diabetes data - juiced
+diabetes training data preprocessed
 
 </caption>
 
 <thead>
 
 <tr>
+
+<th style="text-align:right;">
+
+pregnant\_bin\_missing
+
+</th>
 
 <th style="text-align:right;">
 
@@ -545,6 +548,12 @@ pregnant\_bin3
 <th style="text-align:right;">
 
 pregnant\_bin4
+
+</th>
+
+<th style="text-align:right;">
+
+glucose\_bin\_missing
 
 </th>
 
@@ -574,6 +583,12 @@ glucose\_bin4
 
 <th style="text-align:right;">
 
+pressure\_bin\_missing
+
+</th>
+
+<th style="text-align:right;">
+
 pressure\_bin1
 
 </th>
@@ -593,6 +608,12 @@ pressure\_bin3
 <th style="text-align:right;">
 
 pressure\_bin4
+
+</th>
+
+<th style="text-align:right;">
+
+triceps\_bin\_missing
 
 </th>
 
@@ -622,6 +643,12 @@ triceps\_bin4
 
 <th style="text-align:right;">
 
+insulin\_bin\_missing
+
+</th>
+
+<th style="text-align:right;">
+
 insulin\_bin1
 
 </th>
@@ -641,6 +668,12 @@ insulin\_bin3
 <th style="text-align:right;">
 
 insulin\_bin4
+
+</th>
+
+<th style="text-align:right;">
+
+mass\_bin\_missing
 
 </th>
 
@@ -670,6 +703,12 @@ mass\_bin4
 
 <th style="text-align:right;">
 
+pedigree\_bin\_missing
+
+</th>
+
+<th style="text-align:right;">
+
 pedigree\_bin1
 
 </th>
@@ -689,6 +728,12 @@ pedigree\_bin3
 <th style="text-align:right;">
 
 pedigree\_bin4
+
+</th>
+
+<th style="text-align:right;">
+
+age\_bin\_missing
 
 </th>
 
@@ -750,42 +795,6 @@ diabetes\_X1
 
 <td style="text-align:right;">
 
-1
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-1
-
-</td>
-
-<td style="text-align:right;">
-
 0
 
 </td>
@@ -805,30 +814,6 @@ diabetes\_X1
 <td style="text-align:right;">
 
 0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-1
 
 </td>
 
@@ -900,7 +885,115 @@ diabetes\_X1
 
 <td style="text-align:right;">
 
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
 1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
 
 </td>
 
@@ -946,24 +1039,6 @@ diabetes\_X1
 
 <td style="text-align:right;">
 
-1
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
 0
 
 </td>
@@ -1030,12 +1105,6 @@ diabetes\_X1
 
 <td style="text-align:right;">
 
-1
-
-</td>
-
-<td style="text-align:right;">
-
 0
 
 </td>
@@ -1066,6 +1135,36 @@ diabetes\_X1
 
 <td style="text-align:right;">
 
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
 1
 
 </td>
@@ -1097,6 +1196,48 @@ diabetes\_X1
 <td style="text-align:right;">
 
 1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
 
 </td>
 
@@ -1172,24 +1313,6 @@ diabetes\_X1
 
 <td style="text-align:right;">
 
-1
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
 0
 
 </td>
@@ -1197,178 +1320,6 @@ diabetes\_X1
 <td style="text-align:right;">
 
 1
-
-</td>
-
-<td style="text-align:right;">
-
-1
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-1
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-1
-
-</td>
-
-<td style="text-align:right;">
-
-1
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-1
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-1
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-1
-
-</td>
-
-</tr>
-
-<tr>
-
-<td style="text-align:right;">
-
-1
-
-</td>
-
-<td style="text-align:right;">
-
-0
 
 </td>
 
@@ -1470,6 +1421,36 @@ diabetes\_X1
 
 <td style="text-align:right;">
 
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
 1
 
 </td>
@@ -1500,12 +1481,6 @@ diabetes\_X1
 
 <td style="text-align:right;">
 
-1
-
-</td>
-
-<td style="text-align:right;">
-
 0
 
 </td>
@@ -1525,6 +1500,12 @@ diabetes\_X1
 <td style="text-align:right;">
 
 1
+
+</td>
+
+<td style="text-align:right;">
+
+0
 
 </td>
 
@@ -1576,12 +1557,6 @@ diabetes\_X1
 
 <td style="text-align:right;">
 
-0
-
-</td>
-
-<td style="text-align:right;">
-
 1
 
 </td>
@@ -1595,54 +1570,6 @@ diabetes\_X1
 <td style="text-align:right;">
 
 0
-
-</td>
-
-<td style="text-align:right;">
-
-1
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-1
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-1
 
 </td>
 
@@ -1714,7 +1641,365 @@ diabetes\_X1
 
 <td style="text-align:right;">
 
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
 1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+0
+
+</td>
+
+<td style="text-align:right;">
+
+1
+
+</td>
+
+<td style="text-align:right;">
+
+0
 
 </td>
 
@@ -1787,7 +2072,8 @@ diabetes training data.
 diabetes_train_model <-
   tidycorels::tidy_corels(
     df = diabetes_train_preprocessed,
-    outcome_cols = c("diabetes_X0", "diabetes_X1"),
+    label_cols = c("diabetes_X0", "diabetes_X1"),
+    value_delim = "_",
     run_bfs = TRUE,
     calculate_size = TRUE,
     run_curiosity = TRUE,
@@ -1814,28 +2100,28 @@ diabetes_train_model$corels_console_output[4:10]
 And here are those rules converted to data.table code.
 
 ``` r
-diabetes_train_model$DT_code
+diabetes_train_model$corels_rules_DT
 ```
 
-    ## [1] "DT[,corels_pred := fifelse( `age_bin1` == 1, 0,fifelse( `glucose_bin4` == 1, 1,fifelse( `insulin_bin1` == 1, 0,fifelse( `pedigree_bin1` == 1, 0,fifelse( `triceps_bin4` == 1, 1,0)))))]"
+    ## [1] "DT[,corels_label := fifelse( `age_bin1` == 1, 0,fifelse( `glucose_bin4` == 1, 1,fifelse( `insulin_bin1` == 1, 0,fifelse( `pedigree_bin1` == 1, 0,fifelse( `triceps_bin4` == 1, 1,0)))))]"
 
-A dataframe of just the true outcome, the columns used in the corels
-rules, and the corels predictions is also available. The columns have
+A dataframe of just the true label, the columns used in the Corels
+rules, and the Corels predictions is also available. The columns have
 been ordered for you to work well in an
 [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md)
 plot.
 
 ``` r
-p <- diabetes_train_model$alluvial_DT %>% 
+p <- diabetes_train_model$alluvial %>%
   easyalluvial::alluvial_wide(stratum_width = 0.2) +
-    ggplot2::theme_minimal() +
-    ggplot2::labs(
-      title = "Corels if-then-else logic",
-      subtitle = " From truth (far left columun) to Corels classification (far right column)"
-    )
+  ggplot2::theme_minimal() +
+  ggplot2::labs(
+    title = "Corels if-then-else logic",
+    subtitle = " From truth (far left column) to Corels classification (far right column)"
+  )
 
 ggplot2::ggsave(
-  file = paste0(here::here(),"/images/train_alluvial.svg"),
+  file = paste0(here::here(), "/images/train_alluvial.svg"),
   device = "svg",
   plot = p
 )
@@ -1845,163 +2131,60 @@ ggplot2::ggsave(
 
 ## Performance on test data
 
-Before we can apply the Corels rules to unseen test data, we apply the
-same data preperation `recipe` created on the training data to the test
-data.
-
-``` r
-diabetes_test_juiced <-
-  diabetes_recipe %>%
-  recipes::prep(diabetes_test) %>%
-  recipes::juice()
-```
-
 Next we use the function `tidycorels::corels_predict()` to apply the
-rules created on the training data to the test data.
+Corels rules created on the training data to the test data.
 
 ``` r
 diabetes_test_predict <-
-  predict_corels(
+  tidycorels::predict_corels(
     model = diabetes_train_model,
-    new_df = diabetes_test_juiced
+    new_df = diabetes_test_preprocessed
   )
 ```
 
-Then plot a confusion matrix to assess the perfomrance of Corels rules
-on the test data.
+We can now use the test data that has been labelled using the Corels
+rules to compare to the true labe with a confusion matrix and
+performance statistics.
 
 ``` r
 conf_matrix <-
-  diabetes_test_predict$alluvial_DT %>%
+  diabetes_test_predict$new_df_labelled %>%
   yardstick::conf_mat(
     truth = "diabetes_X1",
-    estimate = "corels_pred"
+    estimate = "corels_label"
   )
 
-p <- ggplot2::autoplot(conf_matrix, "heatmap")
+heatmap <- ggplot2::autoplot(conf_matrix, "heatmap")
 ggplot2::ggsave(
-  file = paste0(here::here(),"/images/heat.svg"),
-  device = "svg",
-  plot = p
+  file = paste0(here::here(), "/images/heat.png"),
+  device = "png",
+  plot = heatmap
 )
-```
 
-<img src="./images/heat.svg" width="70%" />
+# https://github.com/tidymodels/yardstick/issues/160
+conf_matrix <- 
+  withr::with_options(c(yardstick.event_first = FALSE),summary(conf_matrix)) %>% 
+  dplyr:::mutate(.estimate = round(.estimate, digits = 3)) %>%
+  dplyr::select(.metric, .estimate) %>%
+  dplyr::filter(.metric %in% c("accuracy","bal_accuracy","mcc","precision", "recall", "f_meas"))
 
-The confusion matrix can be used to generate the perfomance statistics
-below. The accuracy achieved by Corels on the unseen test data is 0.760.
-This is higher than the random forest model used in Rebbeca’s example
-which reached an accuray of 0.745 on the same test data set.
-
-``` r
-summary(conf_matrix) %>%
-  dplyr:::mutate(.estimate = round(.estimate,digits = 3)) %>% 
-  dplyr::select(.metric,.estimate) %>% 
-  dplyr::filter(.metric %in% c("accuracy","precision","recall","f_meas")) %>% 
-  dplyr::mutate(.estimate = color_tile("white", "orange")(.estimate)) %>%
+conf_matrix_table <- conf_matrix %>%
+  dplyr::mutate(.estimate = formattable::color_tile("white", "orange")(.estimate)) %>%
   kableExtra::kable(escape = F) %>%
   kableExtra::kable_styling("hover", full_width = F)
+
+kableExtra::save_kable(conf_matrix_table, file = "./images/conf_matrix.png")
 ```
 
-<table class="table table-hover" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<img src="./images/heat.png" width="60%" />
+<img src="./images/conf_matrix.png" width="18%" />
 
-<thead>
-
-<tr>
-
-<th style="text-align:left;">
-
-.metric
-
-</th>
-
-<th style="text-align:left;">
-
-.estimate
-
-</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-<tr>
-
-<td style="text-align:left;">
-
-accuracy
-
-</td>
-
-<td style="text-align:left;">
-
-<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffffff">0.760</span>
-
-</td>
-
-</tr>
-
-<tr>
-
-<td style="text-align:left;">
-
-precision
-
-</td>
-
-<td style="text-align:left;">
-
-<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffe3b1">0.788</span>
-
-</td>
-
-</tr>
-
-<tr>
-
-<td style="text-align:left;">
-
-recall
-
-</td>
-
-<td style="text-align:left;">
-
-<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffa500">0.852</span>
-
-</td>
-
-</tr>
-
-<tr>
-
-<td style="text-align:left;">
-
-f\_meas
-
-</td>
-
-<td style="text-align:left;">
-
-<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffc55b">0.819</span>
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-## Alluvial plot
-
-In contrast to the random forest model with variable importance values,
-the Corels rules are easy to understand and visualise with the
-interactive alluvial plot. Below is a screenshot where one path trough
-the Corels rules is highlighted in darker green where individiuals known
-to have diabetes are also correctly classified. We can see they are,
+The accuracy achieved by Corels on the unseen test data is 0.745. This
+is the same accuracy the random forest reached in Rebbeca’s example. In
+contrast, Corels rules are easy to read and visualise with an alluvial
+plot. The screenshot below is one path through the Corels rules
+(highlighted in darker green) where diabetes was correctly labelled. We
+can see they are:
 
 1.  in older age groups,
 2.  have the highest blood glucose concentraion,
@@ -2013,21 +2196,20 @@ to have diabetes are also correctly classified. We can see they are,
 <!-- end list -->
 
 ``` r
-p <- easyalluvial::alluvial_wide(diabetes_test_predict$alluvial_DT)
+p <- easyalluvial::alluvial_wide(diabetes_test_predict$alluvial_df)
 
 parcats::parcats(p,
   marginal_histograms = FALSE,
-  data_input = diabetes_test_predict$alluvial_DT, labelfont = 14
+  data_input = diabetes_test_predict$alluvial_df, labelfont = 14
 )
 ```
 
 <img src="./images/diabetes_path.png" width="80%" />
 
-Further, we can build a richer undestanding of each Corels rule by
-visualising the distribution of values of each bin used in each rule
-within the discretised/binnned column it came from. Below, each plot
-from left to right highlights the bin used in each Corels rule in
-sequential order.
+Further, below we visualise the distribution of the raw values of each
+categorised bin used in each rule. The plots from left to right
+highlight which bin is used in each Corels rule in the sequential order
+of the rules.
 
 <img src="./images/final.svg" width="80%" />
 
@@ -2037,14 +2219,13 @@ sequential order.
 
 ``` r
 diabetes_recipe_non_dummy <-
-  recipes::recipe(diabetes ~ pregnant + glucose + pressure + triceps +
-    insulin + mass + pedigree + age,
+  recipes::recipe(diabetes ~ .,
   data = diabetes_clean
   ) %>%
   recipes::step_normalize(all_numeric()) %>%
   recipes::step_knnimpute(all_predictors()) %>%
   # discretise numeric variables into bins
-  recipes::step_discretize(pregnant, glucose, pressure, triceps, insulin, mass, pedigree, age, min_unique = 1) %>%
+  recipes::step_discretize(-recipes::all_outcomes(), min_unique = 1) %>%
   recipes::step_mutate_at(recipes::all_predictors(), fn = list(~ as.factor(.))) %>%
   recipes::step_mutate_at(recipes::all_outcomes(), fn = list(~ as.factor(.)))
 
@@ -2080,7 +2261,7 @@ p5 <- plot_fun(X = TRICEPS, Y = triceps, bin = bin4)
 final <- cowplot::plot_grid(p1, p2, p3, p4, p5)
 
 ggplot2::ggsave(
-  file = "/images/final.svg",
+  file = "./images/final.svg",
   device = "svg",
   plot = final
 )

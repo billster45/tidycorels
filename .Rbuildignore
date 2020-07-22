@@ -5,3 +5,5 @@
 ^\images
 ^README_files
 ^README.Rmd
+^doc$
+^Meta$

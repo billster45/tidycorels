@@ -12,8 +12,12 @@ predict_corels(model, new_df)
 \item{new_df}{A new dataframe to apply corels rules to and generate a classification.}
 }
 \description{
-Applies the Corels rules in theR object returned by tidycorels::corels() to a new dataframe. For example, test data not used to create the Corels rules.
+Applies the Corels rules returned by \code{\link[tidycorels]{tidy_corels}} to a new dataframe. For example, test data not used to create the Corels rules.
 }
-\examples{
-# See <https://github.com/billster45/tidycorels/blob/master/README.md>
+\details{
+The function returns your dataframe with the corels rules applied by adding the column "corels_label".
+
+Returns a dataframe of only the true label, the columns used in the rules, and the corels classification applied to the new dataframe (alluvial). This dataframe is intended to be used in an easyalluvial plot \url{https://github.com/erblast/easyalluvial/blob/master/README.md}.
+
+\strong{Example}: \url{https://github.com/billster45/tidycorels/blob/master/README.md}
 }
