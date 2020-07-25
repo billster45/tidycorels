@@ -2,7 +2,7 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^README.Rmd
-^\images
+^images
 ^README_files
 ^README.Rmd
 ^doc$
