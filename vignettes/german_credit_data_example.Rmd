@@ -23,7 +23,7 @@ knitr::opts_chunk$set(
 
 The performance of [Corels](https://corels.eecs.harvard.edu/) on test data is compared to [XGboost](https://xgboost.readthedocs.io/en/latest/R-package/xgboostPresentation.html).
 
-Precision is an important metric for loan decisions (i.e. when a good loan is predicted, how often it is true). In this example, on unseen test data, XGBoost achieves **84%** accuarcy (106 / (106 + 20)) vs. **78%** (117/(117+34)) for Corels. The null accuracy (always predicting the most frequent class of a good loan) is **73%** (142 / (142 + 52).
+Precision is an important metric for loan decisions (i.e. when a good loan is predicted, how often it is true). In this example, on unseen test data, XGBoost achieves **84%** accuarcy (106 / (106 + 20)) vs. **78%** (117 / (117 + 34)) for Corels. The null accuracy (always predicting the most frequent class of a good loan) is **73%** (142 / (142 + 52).
 
 While XGBoost performs better, the Corels rules are short and easy to interpret. Also, the accuracy achieved by the two methods is more similar (XGBoost **72%** vs. Corels **70%**).
 
