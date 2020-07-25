@@ -35,5 +35,5 @@ Consider using recipes::step_integer(recipes::all_outcomes(), zero_based = TRUE)
 
 To apply the corels rules created to a new dataframe, see \code{\link[tidycorels]{predict_corels}}.
 
-\strong{Example}: \url{https://github.com/billster45/tidycorels/blob/master/README.md}
+\strong{Examples}: \url{https://billster45.github.io/tidycorels/}
 }

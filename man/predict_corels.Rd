@@ -19,5 +19,5 @@ The function returns your dataframe with the corels rules applied by adding the 
 
 Returns a dataframe of only the true label, the columns used in the rules, and the corels classification applied to the new dataframe (alluvial). This dataframe is intended to be used in an easyalluvial plot \url{https://github.com/erblast/easyalluvial/blob/master/README.md}.
 
-\strong{Example}: \url{https://github.com/billster45/tidycorels/blob/master/README.md}
+\strong{Examples}: \url{https://billster45.github.io/tidycorels/}
 }

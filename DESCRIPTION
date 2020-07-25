@@ -13,6 +13,7 @@ Imports:  data.table (>= 1.9.8),
 Suggests: knitr,
           dplyr,
           easyalluvial,
+          parcats,
           formattable,
           funModeling,
           ggplot2,
@@ -26,6 +27,7 @@ Suggests: knitr,
           scales,
           vip,
           withr,
+          mlbench,
           dials,
           parsnip,
           recipes,
@@ -33,7 +35,9 @@ Suggests: knitr,
           workflows,
           yardstick,
           tidymodels,
-          xgboost
+          xgboost,
+          cowplot,
+          gghighlight
 Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr

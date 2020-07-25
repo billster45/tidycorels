@@ -7,7 +7,7 @@ output:
     toc_depth: 3
 always_allow_html: yes
 vignette: >
-  %\VignetteIndexEntry{xgboost}
+  %\VignetteIndexEntry{RandomForest}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

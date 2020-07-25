@@ -119,7 +119,7 @@ capture_corels <- function(corels_output, label_cols, value_delim) {
 #'
 #' To apply the corels rules created to a new dataframe, see \code{\link[tidycorels]{predict_corels}}.
 #'
-#' \strong{Example}: \url{https://github.com/billster45/tidycorels/blob/master/README.md}
+#' \strong{Examples}: \url{https://billster45.github.io/tidycorels/}
 #' @param df The dataframe to generate rules from. Applies the function corels::corels().
 #' @param label_cols The two columns in df that represent the label. Corels expects two columns representing each class. Consider using recipes::step_dummy() to convert outcome to two columns.
 #' @param value_delim the delimiter to mark where the value of the 0/1 binary feature appears in the column name. Default value is underscore "_" as this is used by recipes::step_dummy() when creating dummy columns.
@@ -210,7 +210,7 @@ tidy_corels <- function(df, label_cols, value_delim = "_", ...) {
 #'
 #' Returns a dataframe of only the true label, the columns used in the rules, and the corels classification applied to the new dataframe (alluvial). This dataframe is intended to be used in an easyalluvial plot \url{https://github.com/erblast/easyalluvial/blob/master/README.md}.
 #'
-#' \strong{Example}: \url{https://github.com/billster45/tidycorels/blob/master/README.md}
+#' \strong{Examples}: \url{https://billster45.github.io/tidycorels/}
 #'
 #' @param model R object created by tidy_corels() function.
 #' @param new_df A new dataframe to apply corels rules to and generate a classification.
