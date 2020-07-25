@@ -1,5 +1,5 @@
 ---
-title: "Xgboost vs Corels"
+title: "Corels vs XGBoost"
 date: "`r Sys.Date()`"
 output:
   github_document:
@@ -14,35 +14,24 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE, echo = TRUE, warning = FALSE, message = FALSE,
+  collapse = TRUE, echo = TRUE, warning = FALSE, message = FALSE, 
   comment = "#>"
 )
 ```
 
-```{r}
-library(tidymodels)
-library(corels)
-library(tidycorels)
-library(funModeling)
-library(pROC)
-library(formattable)
-```
-
 # Summary
 
-The performance of [Corels](https://corels.eecs.harvard.edu/) on test data is compared to [XGboost](https://xgboost.readthedocs.io/en/latest/R-package/xgboostPresentation.html). The precision XGBoost achieved on unseen test data is **84%** (106 / (106 + 20)) vs. **78%** (117/(117+34)) for Corels in this example. The null accuracy (always predicting the most frequent class of a good loan) is **73%** (142 / (142 + 52).
+The performance of [Corels](https://corels.eecs.harvard.edu/) on test data is compared to [XGboost](https://xgboost.readthedocs.io/en/latest/R-package/xgboostPresentation.html).
 
-Precision is an important metric for loan decisions of precision (i.e. when a good loan is predicted, how often it is true). While XGBoost performs better, the Corels rules are short and easy to interpret. And the accuracy achieved by the two methods is more similar (XGBoost **72%** vs. Corels **70%**).
+Precision is an important metric for loan decisions (i.e. when a good loan is predicted, how often it is true). In this example, on unseen test data, XGBoost achieves **84%** accuarcy (106 / (106 + 20)) vs. **78%** (117/(117+34)) for Corels. The null accuracy (always predicting the most frequent class of a good loan) is **73%** (142 / (142 + 52).
+
+While XGBoost performs better, the Corels rules are short and easy to interpret. Also, the accuracy achieved by the two methods is more similar (XGBoost **72%** vs. Corels **70%**).
 
 # Background
 
 > Corels are ['Certifiably Optimal RulE ListS'](https://corels.eecs.harvard.edu/). They are short and simple human [interpretable rule lists](https://arxiv.org/pdf/1704.01701.pdf) created on categorical data.
 
 This analysis compares the performance of a simple Corels rule set to xgboost on German credit data.
-
-The Corels authors [say](https://corels.eecs.harvard.edu/corels/whatarerulelists.html) that.. 
-
-*"The advantage of rule lists as predictive models is that they are human interpretable, as opposed to black box models such as neural nets. Proponents of such non-interpretable models often claim that they are necessary to achieve greater accuracy, but we have shown that it is possible for rule lists to have comparable or even greater accuracy."*
 
 The xgboost modelling of the [german credit data](https://www.openml.org/d/31) is adapted from this excellent test of [tidymodels with drake](https://github.com/hamedbh/test-drake-tidymodels).
 
@@ -53,6 +42,13 @@ The xgboost modelling of the [german credit data](https://www.openml.org/d/31) i
 The [german credit data](https://www.openml.org/d/31) is downloaded and prepared using the code in [tidymodels with drake](https://github.com/hamedbh/test-drake-tidymodels). 
 
 ```{r}
+library(tidymodels)
+library(corels)
+library(tidycorels)
+library(funModeling)
+library(pROC)
+library(formattable)
+
 clean_df <- read.table(file = "https://www.openml.org/data/get_csv/31/dataset_31_credit-g.arff",
                        header = TRUE,
                        sep = ",") %>%
@@ -82,11 +78,11 @@ folds <- rsample::vfold_cv(trainData,
 
 ## Data exploration
 
-First let's quickly explore the [relationships](https://livebook.datascienceheroes.com/exploratory-data-analysis.html#selecting_best_vars_mic) between each predictor and the outcome of a good or bad loan.
+Let's quickly explore the [relationships](https://livebook.datascienceheroes.com/exploratory-data-analysis.html#selecting_best_vars_mic) between each predictor and the outcome of a good or bad loan.
 
 We use the funModels package to bin or categorise numeric predictors to [maximise the information gain ratio](https://blog.datascienceheroes.com/discretization-recursive-gain-ratio-maximization/). From this we can more easily *"semantically describe the relationship between the input and the target variable"*.
 
-We also store the cut points of the categorised continuous columns to be used later when using Corels.
+We also store the cut points of the categorised continuous columns to be used later when categorsing values for  Corels.
 
 ```{r}
 # https://blog.datascienceheroes.com/discretization-recursive-gain-ratio-maximization/
@@ -168,7 +164,7 @@ plot_fun <- function(cat) {
 }
 ```
 
-In each plot below we can view the relationships between each predictor and outcome. Variables that have the most variation in the ratio between good and bad loans we would expect them to feature in the classification models. For example, acctStatus, durationCat, creditHistory, purpose, and amountCat. 
+In each plot below we can view the relationships between each predictor and outcome. Variables that have the most variation in the ratio between good and bad loans we would expect them to feature in the classification models.
 
 ```{r}
 cols <- base::colnames(dplyr::select(trainData_cat, -duration, -age, -creditAmount)) # getting all the column names but removing the continuous columns that have been binned.
@@ -179,9 +175,9 @@ print(plots)
 
 # CORELS
 
-## Prepare the data
+## Prepare data for Corels
 
-Using the recipes package in [tidymodels](https://www.tidymodels.org/) we create a recipe that converts the three continuous value columns into categories, then converted the values in every column into individual dummy fields per value.
+Using the recipes package in [tidymodels](https://www.tidymodels.org/) we create a recipe that converts the three continuous value columns into categories, then convert the values in every column into individual dummy fields per value.
 
 ```{r}
 # create the data preperation recipe
@@ -189,30 +185,37 @@ credit_recipe <-
   recipes::recipe(class ~ .,
     data = trainData
   ) %>%
-  # Apply the funModeling::discretize_rgr() cut points to continuous columns that maximise the information gain ratio on the training data only
+  # 1 Apply the funModeling::discretize_rgr() cut points to continuous columns that maximise the information gain ratio on the training data only
   recipes::step_mutate(age = base::cut(age, breaks = c("-inf", age_cat_cuts, "inf"), right = FALSE, dig.lab = 10)) %>%
   recipes::step_mutate(duration = base::cut(duration, breaks = c("-inf", duration_cat_cuts, "inf"), right = FALSE, dig.lab = 10)) %>%
   recipes::step_mutate(creditAmount = base::cut(creditAmount, breaks = c("-inf", amount_cat_cuts, "inf"), right = FALSE, dig.lab = 10)) %>%
-  # ensure column values that are words do not have spaces. This will form better dummy column names that tidycorels needs where the value each dummy column represents is shown by a single delimiter (e.g. the underscore step_dummy creates)
+  # 2 ensure column values that are words do not have spaces. This will form better dummy column names that tidycorels needs where the value each dummy column represents is shown by a single delimiter (e.g. the underscore step_dummy creates)
   recipes::step_mutate_at(recipes::all_predictors(), fn = list(~ base::gsub(pattern = "_", replacement = ".", x = .))) %>%
+  # 3 convert each value of each predictor into its own 0/1 binary column
   recipes::step_mutate_at(recipes::all_predictors(), fn = list(~ as.factor(.))) %>%
   recipes::step_mutate(class = as.factor(class)) %>% # step_dummy requires variable values to be factors
   recipes::step_dummy(recipes::all_predictors(), one_hot = TRUE) %>%
+  # 4 convert each value of the outcome column into its own 0/1 binary column
   recipes::step_integer(recipes::all_outcomes(), zero_based = TRUE) %>% # ensure outcome is 0/1 rather than words
   recipes::step_mutate_at(recipes::all_outcomes(), fn = list(~ as.factor(.))) %>% # step_dummy requires variable values to be factors
   recipes::step_dummy(recipes::all_outcomes(), one_hot = TRUE)
 
 # Train the data preperation recipe on the training data
-credit_recipe_trained <- recipes::prep(credit_recipe, training = trainData)
+credit_recipe_trained <- recipes::prep(credit_recipe, 
+                                       training = trainData,
+                                       retain = TRUE)
 
-# Apply the recipe that has been trained on the training data to both the training and test data
-credit_train_preprocessed <- recipes::bake(credit_recipe_trained, new_data = trainData)
-credit_test_preprocessed <- recipes::bake(credit_recipe_trained, new_data = testData)
+# Extract the train data with recipe applied (juice), and the same recipe applied to the test data (bake) data
+credit_train_preprocessed <- recipes::juice(credit_recipe_trained)
+credit_test_preprocessed <- recipes::bake(credit_recipe_trained, 
+                                          new_data = testData)
 ```
 
-We can now run `tidycorels::tidy_corels()` function on the prepared training data. We vary the regularization argument in corels. This value, *"can be thought of as a penalty equivalent to misclassifying 1% of the data when increasing the length of a rule list by one association rule."* When the regulraization value is low many rules are created that could [overfit](https://en.wikipedia.org/wiki/Overfitting) to error in the training data. A higher value leads to fewer rules which may generalise better to unseen test data. Here we simply use the default value of 0.01 that leads to a small number of rules.
+## Run tidycorels
 
-```{r}
+We can now run `tidycorels::tidy_corels()` function on the prepared training data. We could consider varying the regularization argument in corels. This value, *"can be thought of as a penalty equivalent to misclassifying 1% of the data when increasing the length of a rule list by one association rule."* When the regulraization value is low many rules are created that could [overfit](https://en.wikipedia.org/wiki/Overfitting) to error in the training data. A higher value leads to fewer rules which may generalise better to unseen test data. Here we simply use the default value of 0.01 that leads to a small number of rules.
+
+```{r, results='hide'}
 credit_train_model <-
     tidycorels::tidy_corels(
       df = credit_train_preprocessed,
@@ -224,16 +227,17 @@ credit_train_model <-
       regularization = 0.01, 
       curiosity_policy = 3
     )
+credit_train_model$corels_console_output[4:8]
 ```
 
 A dataframe of just the true label, the columns used in the Corels rules, and the Corels predictions is returned. The columns have been ordered for you to work well in an [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md) plot.
 
 ```{r}
-easyalluvial::alluvial_wide(credit_train_model$alluvial_df, verbose = TRUE) +
+easyalluvial::alluvial_wide(credit_train_model$alluvial_df) +
   ggplot2::coord_flip()
 ```
 
-## Performance on test data
+## Corels performance on test
 
 Next we use the function `tidycorels::corels_predict()` to apply the Corels rules created on the training data to the test data that has already been pre-processed using the recipe created on the training data.
  
@@ -267,23 +271,23 @@ withr::with_options(c(yardstick.event_first = FALSE),summary(conf_matrix)) %>%
   kableExtra::kable_styling("hover", full_width = F)
 ```
 
-Because, *"It is worse to class a customer as good when they are bad (5), than it is to class a customer as bad when they are good (1)."* ([see](https://archive.ics.uci.edu/ml/datasets/Statlog+(German+Credit+Data))),  Precision is a useful metric. It measures the proportion of True Positives (117 labelled good loans that were actually good), out of the True Positives plus False Positives (34 labelled good loans that were actually bad). This is the bottom row of the confusion matrix: 117 / (117 + 34) = 0.775.
+Because, *"It is worse to class a customer as good when they are bad (5), than it is to class a customer as bad when they are good (1)."* ([see](https://archive.ics.uci.edu/ml/datasets/Statlog+(German+Credit+Data))), precision is a useful metric. It measures the proportion of True Positives (117 labelled good loans that were actually good), out of the True Positives plus False Positives (34 labelled good loans that were actually bad). This is the bottom row of the confusion matrix: 117 / (117 + 34) = 0.775.
 
 By inspecting the alluvial plot on test data we can easily see where and why the rules have succeeded or failed to label the unseen test data correctly.
 
 ```{r}
-easyalluvial::alluvial_wide(credit_test_predict$alluvial_df, verbose = TRUE) +
+easyalluvial::alluvial_wide(credit_test_predict$alluvial_df) +
   ggplot2::coord_flip() 
 ```
 
-# xgboost
+# XGBboost
 
-Next we try xgboost that is a Gradient Boosting Method:
+Next we try XGBoost that is a Gradient Boosting Method:
 
 *"GBMs build an ensemble of shallow trees in sequence with each tree learning and improving on the previous one. Although shallow trees by themselves are rather weak predictive models, they can be “boosted” to produce a powerful “committee” that, when appropriately tuned, is often hard to beat with other algorithms."*
 From ["Hands on Machine Learning with R"](https://bradleyboehmke.github.io/HOML/gbm.html)
 
-## data recipe
+## Data recipe
 
 In the data recipe only the categorical columns are one-hot encoded into one column per value. 
 
@@ -298,7 +302,7 @@ xgb_pre_proc <-
   )
 ```
 
-## define model and its parameters
+## Define model and its parameters
 
 Here we define which [boost tree parameters](https://parsnip.tidymodels.org/reference/boost_tree.html) will be tuned later and which we fix. 
 
@@ -316,7 +320,7 @@ xgb_mod <-
   parsnip::set_engine("xgboost")
 ```
 
-## add recipe and model to a workflow
+## Add recipe and model to a workflow
 
 The workflow is therefore the data preparation recipe and the model specification (including its type and which parameters are to be tuned later).
 
@@ -327,7 +331,7 @@ xgb_wflow <-
   workflows::add_model(xgb_mod)
 ```
 
-## define parameters
+## Define model parameters
 
 Let's now define the parameters by looking at the workflow
 
@@ -369,6 +373,8 @@ xgb_grid <-
 xgb_grid
 ```
 
+## Tune XGBoost model
+
 We can now tune the model by [searching the grid of parameters](https://www.tidymodels.org/learn/work/tune-svm/).
 
 ```{r}
@@ -387,7 +393,7 @@ tune_xgb_grid <-
 tune_xgb_grid
 ```
 
-## Iterative Bayesian optimisation
+## Tune with iterative Bayesian optimisation
 
 *"..iterative search can be used to analyze the existing tuning parameter results and then predict which tuning parameters to try next."* [see](https://www.tidymodels.org/learn/work/bayes-opt/)
 
@@ -409,7 +415,7 @@ xgb_bayes_tune <-
   )
 ```
 
-## select best model
+## Select best model parameters
 
 We can select the hyperparameters giving the best results with `tune::select_best()` according to our chosen metric (area under the ROC curve).
 
@@ -441,7 +447,7 @@ final_fit <-
 final_fit
 ```
 
-## variable importance
+## Variable importance
 
 The [`{vip}`](https://koalaverse.github.io/vip/index.html) package provides variable importance plots. Further methods are well described in the [Interpretable machine learning](https://christophm.github.io/interpretable-ml-book/) book.
 
@@ -455,7 +461,7 @@ final_fit %>%
   )
 ```
 
-## Evaluate on training data
+## XGBoost performance on train
 
 First we plot the ROC curve for all cut points of the probability of a good loan.
 
@@ -533,11 +539,11 @@ withr::with_options(
   kableExtra::kable_styling("hover", full_width = F)
 ```
 
-## Test set performance
+## XGBoost performance on test
 
 In contrast to the training data, the test set performance is much lower for all metrics. 
 
-Compared to Corels, the most important metric is precision. This is because incorrectly labelling bad loans as good has the greatest cost.
+An important evaluation metric is precision. This is because incorrectly labelling bad loans as good has the greatest cost.
 
 ```{r test AUC XGBoost}
 xgb_test_preds <- final_fit %>%

@@ -1,0 +1,257 @@
+---
+title: "Corels vs Random Forest"
+date: "`r Sys.Date()`"
+output:
+  github_document:
+    toc: true
+    toc_depth: 3
+always_allow_html: yes
+vignette: >
+  %\VignetteIndexEntry{xgboost}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE, echo = TRUE, warning = FALSE, message = FALSE,
+  comment = "#>"
+)
+```
+
+# Summary
+
+The performance of [Corels](https://corels.eecs.harvard.edu/) on test data is compared to [Rebecca Barter's](http://www.rebeccabarter.com/blog/2020-03-25_machine_learning/) tidymodels walkthrough applying a random forest model.
+
+The accuarcy of Corels on test data of 75% is the same as Rebbeca's random forest example and similar to that achieved by popular [Kaggle notebooks](https://www.kaggle.com/uciml/pima-indians-diabetes-database/kernels). Though Corels has the advantage of readable rules.
+
+# Background
+
+> Corels are ['Certifiably Optimal RulE ListS'](https://corels.eecs.harvard.edu/). They are short and simple human [interpretable rule lists](https://arxiv.org/pdf/1704.01701.pdf) created on categorical data.
+
+This analysis compares the performance of a simple Corels rule set to a randome forest on the [Pima Indians Diabetes datase](https://www.kaggle.com/uciml/pima-indians-diabetes-database).
+
+# Pima Indians diabetes data
+
+In this example, we re-use the exact `recipes` data preparation steps from the excellent tidymodels walkthrough by [Rebecca Barter](http://www.rebeccabarter.com/blog/2020-03-25_machine_learning/)
+
+```{r}
+library(tidymodels)
+library(corels)
+library(tidycorels)
+library(kableExtra)
+library(easyalluvial)
+library(parcats)
+library(formattable)
+
+kable_table <- function(table, title) {
+  kableExtra::kable(table, caption = title) %>%
+    kableExtra::kable_styling(
+      latex_options = "hold_position",
+      full_width = F,
+      bootstrap_options = c("striped", "condensed"),
+      position = "left"
+    )
+}
+
+# load the Pima Indians dataset from the mlbench dataset
+library(mlbench)
+data(PimaIndiansDiabetes)
+diabetes_orig <- PimaIndiansDiabetes
+
+diabetes_clean <- diabetes_orig %>%
+  dplyr::mutate_at(
+    vars(triceps, glucose, pressure, insulin, mass),
+    function(.var) {
+      if_else(condition = (.var == 0), # if true (i.e. the entry is 0)
+        true = as.numeric(NA), # replace the value with NA
+        false = .var # otherwise leave it as it is
+      )
+    }
+  )
+
+kable_table(head(diabetes_clean, 5), title = "Pima Indians Dataset")
+```
+
+The Pima Indians diabetes data set is split into train and test datasets. 
+
+```{r}
+set.seed(234589)
+diabetes_split <- rsample::initial_split(diabetes_clean,prop = 3 / 4)
+
+diabetes_train <- rsample::training(diabetes_split)
+diabetes_test <- rsample::testing(diabetes_split)
+
+diabetes_cv <- vfold_cv(diabetes_train)
+```
+
+# Prepare dataframe for Corels
+
+We now apply the same `recipe` steps as Rebecca, but with additional step to [discretise](https://recipes.tidymodels.org/reference/step_discretize.html) the continuous variables, then each categorsied value is given its own 0/1 binary column using [`recipes::step_dummy()`](https://recipes.tidymodels.org/reference/step_dummy.html). This is sometimes called one-hot encoding.
+
+Finally, Corels requires the label column (`diabetes`) to be split into two columns representing each class. First we ensure the values in the label are 0 and 1 instead of words (using `recipes::step_integer()`), then use [`recipes::step_dummy()`](https://recipes.tidymodels.org/reference/step_dummy.html) to create the two label columns.
+
+```{r}
+diabetes_corels_recipe <-
+  recipes::recipe(diabetes ~ pregnant + glucose + pressure + triceps + insulin + mass + pedigree + age,
+                  data = diabetes_train) %>%
+  recipes::step_normalize(all_numeric()) %>%
+  recipes::step_knnimpute(all_predictors()) %>%
+  # 1 discretise continous variables into bins
+  recipes::step_discretize(-recipes::all_outcomes(), min_unique = 1) %>%
+  # 2 convert each value of each predictor into its own 0/1 binary column
+  recipes::step_mutate_at(recipes::all_predictors(), fn = list(~ as.factor(.))) %>%
+  recipes::step_dummy(recipes::all_predictors(), one_hot = TRUE) %>%
+  # 3 convert each value of the outcome column into its own 0/1 binary column
+  recipes::step_integer(recipes::all_outcomes(), zero_based = TRUE) %>% # ensure outcome is 0/1 rather than words
+  recipes::step_mutate_at(recipes::all_outcomes(), fn = list(~ as.factor(.))) %>%
+  recipes::step_dummy(recipes::all_outcomes(), one_hot = TRUE)
+
+# Train the data recipe on the training data
+diabetes_trained_rec <- recipes::prep(diabetes_corels_recipe, 
+                                      training = diabetes_train, 
+                                      retain = TRUE)
+
+# Extract the train data with recipe applied (juice), and the same recipe applied to the test data (bake)
+diabetes_train_preprocessed <- recipes::juice(diabetes_trained_rec)
+diabetes_test_preprocessed <- recipes::bake(diabetes_trained_rec, 
+                                            new_data = diabetes_test)
+
+# View the proccessed trained data
+kable_table(head(diabetes_train_preprocessed, 5), title = "diabetes training data preprocessed")
+```
+
+## Run tidycorels
+
+We can now run `tidycorels::tidy_corels()` function on the prepared diabetes training data.
+
+```{r, results="hide"}
+diabetes_train_model <-
+  tidycorels::tidy_corels(
+    df = diabetes_train_preprocessed,
+    label_cols = c("diabetes_X0", "diabetes_X1"),
+    value_delim = "_",
+    run_bfs = TRUE,
+    calculate_size = TRUE,
+    run_curiosity = TRUE,
+    regularization = 0.01,
+    curiosity_policy = 3,
+    map_type = 1
+  )
+```
+
+Here are the Corels rules for the diabetes data.
+
+```{r}
+diabetes_train_model$corels_console_output[4:10]
+```
+
+And here are those rules converted to data.table code.
+
+```{r}
+diabetes_train_model$corels_rules_DT
+```
+
+A dataframe of just the true label, the columns used in the Corels rules, and the Corels predictions is also available. The columns have been ordered for you to work well in an [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md) plot.
+
+```{r, out.width = "80%"}
+diabetes_train_model$alluvial %>%
+  easyalluvial::alluvial_wide(stratum_width = 0.2) +
+  ggplot2::theme_minimal() +
+  ggplot2::labs(
+    title = "Corels if-then-else logic",
+    subtitle = " From truth (far left column) to Corels classification (far right column)"
+  )
+```
+
+## Performance on test data
+
+Next we use the function `tidycorels::corels_predict()` to apply the Corels rules created on the training data to the test data.
+ 
+```{r}
+diabetes_test_predict <-
+  tidycorels::predict_corels(
+    model = diabetes_train_model,
+    new_df = diabetes_test_preprocessed
+  )
+```
+
+We can now use the test data that has been labelled using the Corels rules to compare to the true labe with a confusion matrix and performance statistics.
+
+```{r}
+conf_matrix <-
+  diabetes_test_predict$new_df_labelled %>%
+  yardstick::conf_mat(
+    truth = "diabetes_X1",
+    estimate = "corels_label"
+  )
+
+ggplot2::autoplot(conf_matrix, "heatmap")
+
+# https://github.com/tidymodels/yardstick/issues/160
+conf_matrix <- 
+  withr::with_options(c(yardstick.event_first = FALSE),summary(conf_matrix)) %>% 
+  dplyr:::mutate(.estimate = round(.estimate, digits = 3)) %>%
+  dplyr::select(.metric, .estimate) %>%
+  dplyr::filter(.metric %in% c("accuracy","bal_accuracy","mcc","precision", "recall", "f_meas"))
+
+conf_matrix %>%
+  dplyr::mutate(.estimate = formattable::color_tile("white", "orange")(.estimate)) %>%
+  kableExtra::kable(escape = F) %>%
+  kableExtra::kable_styling("hover", full_width = F)
+```
+
+The accuracy achieved by Corels on the unseen test data is `r conf_matrix$.estimate[1]`. This is the same accuracy the random forest reached in Rebbeca's example. In contrast, Corels rules are easy to read and visualise with an alluvial plot. The screenshot below is one path through the Corels rules (highlighted in darker green) where diabetes was correctly labelled. We can see they are:
+
+1. in older age groups, 
+2. have the highest blood glucose concentraion, 
+3. have insulin that is one of the three highest bins, 
+4. their pedigree (family history) is in one of the three highest value bins, and 
+5. they are in the highest triceps bin (skin fold thickness).  
+
+Further, below we visualise the distribution of the raw values of each categorised bin used in each rule.
+
+```{r}
+diabetes_recipe_non_dummy <-
+  recipes::recipe(diabetes ~ pregnant + glucose + pressure + triceps + insulin + mass + pedigree + age,
+                  data = diabetes_clean) %>%
+  recipes::step_normalize(all_numeric()) %>%
+  recipes::step_knnimpute(all_predictors()) %>%
+  # discretise numeric variables into bins
+  recipes::step_discretize(-recipes::all_outcomes(), min_unique = 1) %>%
+  recipes::step_mutate_at(recipes::all_predictors(), fn = list(~ as.factor(.))) %>%
+  recipes::step_mutate_at(recipes::all_outcomes(), fn = list(~ as.factor(.)))
+
+diabetes_train_preprocessed <-
+  diabetes_recipe_non_dummy %>%
+  recipes::prep(diabetes_train) %>%
+  recipes::juice()
+
+combined <- diabetes_train_preprocessed %>%
+  dplyr::rename_with(toupper) %>%
+  dplyr::bind_cols(diabetes_train)
+
+plot_fun <- function(X, Y, bin) {
+  X <- rlang::ensym(X)
+  Y <- rlang::ensym(Y)
+  bin <- rlang::ensym(bin)
+
+  combined %>%
+    ggplot2::ggplot(aes(
+      x = !!X,
+      y = !!Y
+    )) +
+    ggplot2::geom_violin(scale = "count") +
+    gghighlight::gghighlight(!!X == bin) +
+    ggplot2::theme_minimal()
+}
+
+p1 <- plot_fun(X = AGE, Y = age, bin = bin1)
+p2 <- plot_fun(X = GLUCOSE, Y = glucose, bin = bin4)
+p3 <- plot_fun(X = INSULIN, Y = insulin, bin = bin1)
+p4 <- plot_fun(X = PEDIGREE, Y = pedigree, bin = bin1)
+p5 <- plot_fun(X = TRICEPS, Y = triceps, bin = bin4)
+cowplot::plot_grid(p1, p2, p3, p4, p5)
+```
+
+The plots from left to right highlight which bin is used in each Corels rule in the sequential order of the rules. The plot  is created by combining the [discretised](https://recipes.tidymodels.org/reference/step_discretize.html) and one-hot encoded data with the raw column values.
