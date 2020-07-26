@@ -84,7 +84,7 @@
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Corels vs Random Forest</h1>
             
-            <h4 class="date">2020-07-25</h4>
+            <h4 class="date">2020-07-26</h4>
       
       
       <div class="hidden name"><code>diabetes_example.Rmd</code></div>
@@ -1143,9 +1143,10 @@ diabetes_X1
 </tr>
 </tbody>
 </table>
-<div id="run-tidycorels" class="section level2">
-<h2 class="hasAnchor">
-<a href="#run-tidycorels" class="anchor"></a>Run tidycorels</h2>
+</div>
+<div id="run-tidycorels" class="section level1">
+<h1 class="hasAnchor">
+<a href="#run-tidycorels" class="anchor"></a>Run tidycorels</h1>
 <p>We can now run <code><a href="../reference/tidy_corels.html">tidycorels::tidy_corels()</a></code> function on the prepared diabetes training data.</p>
 <div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">diabetes_train_model</span> <span class="kw">&lt;-</span>
   <span class="kw pkg">tidycorels</span><span class="kw ns">::</span><span class="fu"><a href="../reference/tidy_corels.html">tidy_corels</a></span>(
@@ -1172,7 +1173,7 @@ diabetes_X1
 <div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="no">diabetes_train_model</span>$<span class="no">corels_rules_DT</span>
 <span class="co">#&gt; [1] "DT[,corels_label := fifelse( `age_bin1` == 1, 0,fifelse( `glucose_bin4` == 1, 1,fifelse( `insulin_bin1` == 1, 0,fifelse( `pedigree_bin1` == 1, 0,fifelse( `triceps_bin4` == 1, 1,0)))))]"</span></pre></body></html></div>
 <p>A dataframe of just the true label, the columns used in the Corels rules, and the Corels predictions is also available. The columns have been ordered for you to work well in an <a href="https://github.com/erblast/easyalluvial/blob/master/README.md">alluvial</a> plot.</p>
-<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">diabetes_train_model</span>$<span class="no">alluvial</span> <span class="kw">%&gt;%</span>
+<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">diabetes_train_model</span>$<span class="no">alluvial_df</span> <span class="kw">%&gt;%</span>
   <span class="kw pkg">easyalluvial</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/easyalluvial/man/alluvial_wide.html">alluvial_wide</a></span>(<span class="kw">stratum_width</span> <span class="kw">=</span> <span class="fl">0.2</span>) +
   <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_minimal</a></span>() +
   <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span>(
@@ -1181,9 +1182,9 @@ diabetes_X1
   )</pre></body></html></div>
 <p><img src="diabetes_example_files/figure-html/unnamed-chunk-7-1.png" width="80%"></p>
 </div>
-<div id="performance-on-test-data" class="section level2">
-<h2 class="hasAnchor">
-<a href="#performance-on-test-data" class="anchor"></a>Performance on test data</h2>
+<div id="performance-on-test-data" class="section level1">
+<h1 class="hasAnchor">
+<a href="#performance-on-test-data" class="anchor"></a>Performance on test data</h1>
 <p>Next we use the function <code>tidycorels::corels_predict()</code> to apply the Corels rules created on the training data to the test data.</p>
 <div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="no">diabetes_test_predict</span> <span class="kw">&lt;-</span>
   <span class="kw pkg">tidycorels</span><span class="kw ns">::</span><span class="fu"><a href="../reference/predict_corels.html">predict_corels</a></span>(
@@ -1272,16 +1273,24 @@ f_meas
 </tr>
 </tbody>
 </table>
-<p>The accuracy achieved by Corels on the unseen test data is 0.745. This is the same accuracy the random forest reached in Rebbeca’s example. In contrast, Corels rules are easy to read and visualise with an alluvial plot. The screenshot below is one path through the Corels rules (highlighted in darker green) where diabetes was correctly labelled. We can see they are:</p>
+<p>The accuracy achieved by Corels on the unseen test data is 0.745. This is the same accuracy the random forest reached in Rebbeca’s example. In contrast, Corels rules are easy to read and visualise with an alluvial plot. For example, below if we follow one green path through the Corels rules where diabetes was correctly labelled. We can see they are:</p>
 <ol style="list-style-type: decimal">
-<li>in older age groups,</li>
-<li>have the highest blood glucose concentraion,</li>
-<li>have insulin that is one of the three highest bins,</li>
-<li>their pedigree (family history) is in one of the three highest value bins, and</li>
-<li>they are in the highest triceps bin (skin fold thickness).</li>
+<li>in older age groups (age_bin1 = 0)</li>
+<li>have the highest blood glucose concentraion (glucose_bin4 = 1),</li>
+<li>have insulin that is one of the three highest bins (insulin_bin1 = 0),</li>
+<li>their pedigree (family history) is in one of the three highest value bins, (pedigree_bin1 = 0) and</li>
+<li>they are in the highest triceps bin (skin fold thickness) (triceps_bin4 = 0).</li>
 </ol>
+<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="no">diabetes_test_predict</span>$<span class="no">alluvial_df</span> <span class="kw">%&gt;%</span>
+  <span class="kw pkg">easyalluvial</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/easyalluvial/man/alluvial_wide.html">alluvial_wide</a></span>(<span class="kw">stratum_width</span> <span class="kw">=</span> <span class="fl">0.2</span>) +
+  <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_minimal</a></span>() +
+  <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span>(
+    <span class="kw">title</span> <span class="kw">=</span> <span class="st">"Corels if-then-else logic"</span>,
+    <span class="kw">subtitle</span> <span class="kw">=</span> <span class="st">" From truth (far left column) to Corels classification (far right column)"</span>
+  )</pre></body></html></div>
+<p><img src="diabetes_example_files/figure-html/unnamed-chunk-10-1.png" width="80%"></p>
 <p>Further, below we visualise the distribution of the raw values of each categorised bin used in each rule.</p>
-<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="no">diabetes_recipe_non_dummy</span> <span class="kw">&lt;-</span>
+<div class="sourceCode" id="cb12"><html><body><pre class="r"><span class="no">diabetes_recipe_non_dummy</span> <span class="kw">&lt;-</span>
   <span class="kw pkg">recipes</span><span class="kw ns">::</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/recipe.html">recipe</a></span>(<span class="no">diabetes</span> ~ <span class="no">pregnant</span> + <span class="no">glucose</span> + <span class="no">pressure</span> + <span class="no">triceps</span> + <span class="no">insulin</span> + <span class="no">mass</span> + <span class="no">pedigree</span> + <span class="no">age</span>,
                   <span class="kw">data</span> <span class="kw">=</span> <span class="no">diabetes_clean</span>) <span class="kw">%&gt;%</span>
   <span class="kw pkg">recipes</span><span class="kw ns">::</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/step_normalize.html">step_normalize</a></span>(<span class="fu">all_numeric</span>()) <span class="kw">%&gt;%</span>
@@ -1321,9 +1330,8 @@ f_meas
 <span class="no">p4</span> <span class="kw">&lt;-</span> <span class="fu">plot_fun</span>(<span class="kw">X</span> <span class="kw">=</span> <span class="no">PEDIGREE</span>, <span class="kw">Y</span> <span class="kw">=</span> <span class="no">pedigree</span>, <span class="kw">bin</span> <span class="kw">=</span> <span class="no">bin1</span>)
 <span class="no">p5</span> <span class="kw">&lt;-</span> <span class="fu">plot_fun</span>(<span class="kw">X</span> <span class="kw">=</span> <span class="no">TRICEPS</span>, <span class="kw">Y</span> <span class="kw">=</span> <span class="no">triceps</span>, <span class="kw">bin</span> <span class="kw">=</span> <span class="no">bin4</span>)
 <span class="kw pkg">cowplot</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/cowplot/man/plot_grid.html">plot_grid</a></span>(<span class="no">p1</span>, <span class="no">p2</span>, <span class="no">p3</span>, <span class="no">p4</span>, <span class="no">p5</span>)</pre></body></html></div>
-<p><img src="diabetes_example_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
+<p><img src="diabetes_example_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
 <p>The plots from left to right highlight which bin is used in each Corels rule in the sequential order of the rules. The plot is created by combining the <a href="https://recipes.tidymodels.org/reference/step_discretize.html">discretised</a> and one-hot encoded data with the raw column values.</p>
-</div>
 </div>
   </div>
 

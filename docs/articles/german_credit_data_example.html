@@ -84,7 +84,7 @@
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Corels vs XGBoost</h1>
             
-            <h4 class="date">2020-07-25</h4>
+            <h4 class="date">2020-07-26</h4>
       
       
       <div class="hidden name"><code>german_credit_data_example.Rmd</code></div>
@@ -96,7 +96,7 @@
 <div id="summary" class="section level1">
 <h1 class="hasAnchor">
 <a href="#summary" class="anchor"></a>Summary</h1>
-<p>The performance of <a href="https://corels.eecs.harvard.edu/">Corels</a> on test data is compared to <a href="https://xgboost.readthedocs.io/en/latest/R-package/xgboostPresentation.html">XGboost</a>.</p>
+<p>The performance of <a href="https://corels.eecs.harvard.edu/">Corels</a> on test data is compared to an <a href="https://xgboost.readthedocs.io/en/latest/R-package/xgboostPresentation.html">XGboost</a> walkthrough <a href="https://github.com/hamedbh/test-drake-tidymodels">tidymodels with drake</a>.</p>
 <p>Precision is an important metric for loan decisions (i.e. when a good loan is predicted, how often it is true). In this example, on unseen test data, XGBoost achieves <strong>84%</strong> accuarcy (106 / (106 + 20)) vs. <strong>78%</strong> (117 / (117 + 34)) for Corels. The null accuracy (always predicting the most frequent class of a good loan) is <strong>73%</strong> (142 / (142 + 52).</p>
 <p>While XGBoost performs better, the Corels rules are short and easy to interpret. Also, the accuracy achieved by the two methods is more similar (XGBoost <strong>72%</strong> vs. Corels <strong>70%</strong>).</p>
 </div>
@@ -115,7 +115,7 @@
 <div id="data-source" class="section level2">
 <h2 class="hasAnchor">
 <a href="#data-source" class="anchor"></a>Data source</h2>
-<p>The <a href="https://www.openml.org/d/31">german credit data</a> is downloaded and prepared using the code in <a href="https://github.com/hamedbh/test-drake-tidymodels">tidymodels with drake</a>.</p>
+<p>The <a href="https://www.openml.org/d/31">german credit data</a> is downloaded and prepared.</p>
 <div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">tidymodels</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">corels</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">tidycorels</span>)
@@ -450,6 +450,7 @@ f_meas
 <a href="#xgbboost" class="anchor"></a>XGBboost</h1>
 <p>Next we try XGBoost that is a Gradient Boosting Method:</p>
 <p><em>“GBMs build an ensemble of shallow trees in sequence with each tree learning and improving on the previous one. Although shallow trees by themselves are rather weak predictive models, they can be “boosted” to produce a powerful “committee” that, when appropriately tuned, is often hard to beat with other algorithms."</em> From <a href="https://bradleyboehmke.github.io/HOML/gbm.html">“Hands on Machine Learning with R”</a></p>
+<p>All of the modelling steps below are adapated from the excellent <a href="https://github.com/hamedbh/test-drake-tidymodels">tidymodels with drake</a>.</p>
 <div id="data-recipe" class="section level2">
 <h2 class="hasAnchor">
 <a href="#data-recipe" class="anchor"></a>Data recipe</h2>

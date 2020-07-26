@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 
 # Summary
 
-The performance of [Corels](https://corels.eecs.harvard.edu/) on test data is compared to [XGboost](https://xgboost.readthedocs.io/en/latest/R-package/xgboostPresentation.html).
+The performance of [Corels](https://corels.eecs.harvard.edu/) on test data is compared to an [XGboost](https://xgboost.readthedocs.io/en/latest/R-package/xgboostPresentation.html) walkthrough [tidymodels with drake](https://github.com/hamedbh/test-drake-tidymodels).
 
 Precision is an important metric for loan decisions (i.e. when a good loan is predicted, how often it is true). In this example, on unseen test data, XGBoost achieves **84%** accuarcy (106 / (106 + 20)) vs. **78%** (117 / (117 + 34)) for Corels. The null accuracy (always predicting the most frequent class of a good loan) is **73%** (142 / (142 + 52).
 
@@ -39,7 +39,7 @@ The xgboost modelling of the [german credit data](https://www.openml.org/d/31) i
 
 ## Data source
 
-The [german credit data](https://www.openml.org/d/31) is downloaded and prepared using the code in [tidymodels with drake](https://github.com/hamedbh/test-drake-tidymodels). 
+The [german credit data](https://www.openml.org/d/31) is downloaded and prepared.
 
 ```{r}
 library(tidymodels)
@@ -286,6 +286,8 @@ Next we try XGBoost that is a Gradient Boosting Method:
 
 *"GBMs build an ensemble of shallow trees in sequence with each tree learning and improving on the previous one. Although shallow trees by themselves are rather weak predictive models, they can be “boosted” to produce a powerful “committee” that, when appropriately tuned, is often hard to beat with other algorithms."*
 From ["Hands on Machine Learning with R"](https://bradleyboehmke.github.io/HOML/gbm.html)
+
+All of the modelling steps below are adapated from the excellent [tidymodels with drake](https://github.com/hamedbh/test-drake-tidymodels). 
 
 ## Data recipe
 

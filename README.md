@@ -16,20 +16,26 @@ tidycorels
 > human [interpretable rule lists](https://arxiv.org/pdf/1704.01701.pdf)
 > created on categorical data.
 
+The Corels authors
+[say](https://corels.eecs.harvard.edu/corels/whatarerulelists.html)
+that.. *“The advantage of rule lists as predictive models is that they
+are human interpretable, as opposed to black box models such as neural
+nets. Proponents of such non-interpretable models often claim that they
+are necessary to achieve greater accuracy, but we have shown that it is
+possible for rule lists to have comparable or even greater accuracy.”*
+
 `tidycorels::tidy_corels()` converts your dataframe into two text files
 in the format the R package
 [corels](https://cran.r-project.org/package=corels) expects. It returns
 the Corels rules as well as applying them to your dataframe using
 [`data.table::fifelse()`](https://rdatatable.gitlab.io/data.table/reference/fifelse.html)
-code.
-
-Your dataframe is also returned with fewer columns ready to be used in
-an insightful
+code. Your dataframe is also returned with fewer columns ready to be
+used in an insightful
 [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md)
-plot. This reveals intuitively both how the Corels rules are applied to
+plot. It can reveal intuitively both how the Corels rules are applied to
 your dataframe, and where the classification is correct or incorrect.
-This dataframe only includes the true label, the columns used in the
-Corels rules, and a label column the rules create.
+This reduced dataframe includes: the true label, the columns used in the
+Corels rules in rule order, then the label column the rules create.
 
 ## Installation
 
@@ -70,7 +76,7 @@ mtcars_recipe <-recipes::recipe(am ~ ., data = datasets::mtcars) %>%
   # 2 convert each value of each predictor into its own 0/1 binary column
   recipes::step_mutate_at(recipes::all_predictors(), fn = list(~ as.factor(.))) %>%
   recipes::step_dummy(recipes::all_predictors(), one_hot = TRUE) %>%
-  # 3 convert each value of the outcome into its own 0/1 binary column
+  # 3 convert each value of the outcome column into its own 0/1 binary column
   recipes::step_integer(recipes::all_outcomes(), zero_based = TRUE) %>% # ensure outcome is 0/1 rather than words
   recipes::step_mutate_at(recipes::all_outcomes(), fn = list(~ as.factor(.))) %>%
   recipes::step_dummy(recipes::all_outcomes(), one_hot = TRUE)
@@ -160,7 +166,7 @@ example, if we follow one green path of manual cars (am\_X1 = 1), they
 have more than 3 gears (gear\_X3 = 0), low weight (wt\_bin\_1 ==1) a V
 shaped engine (vs\_x0 = 0).
 
-We can also creat an interactive version of the alluvial plot.
+We can also create an interactive version of the alluvial plot.
 
 ``` r
 p <- easyalluvial::alluvial_wide(corels_mtcars$alluvial_df)

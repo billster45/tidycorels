@@ -121,7 +121,7 @@ diabetes_test_preprocessed <- recipes::bake(diabetes_trained_rec,
 kable_table(head(diabetes_train_preprocessed, 5), title = "diabetes training data preprocessed")
 ```
 
-## Run tidycorels
+# Run tidycorels
 
 We can now run `tidycorels::tidy_corels()` function on the prepared diabetes training data.
 
@@ -155,7 +155,7 @@ diabetes_train_model$corels_rules_DT
 A dataframe of just the true label, the columns used in the Corels rules, and the Corels predictions is also available. The columns have been ordered for you to work well in an [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md) plot.
 
 ```{r, out.width = "80%"}
-diabetes_train_model$alluvial %>%
+diabetes_train_model$alluvial_df %>%
   easyalluvial::alluvial_wide(stratum_width = 0.2) +
   ggplot2::theme_minimal() +
   ggplot2::labs(
@@ -164,7 +164,7 @@ diabetes_train_model$alluvial %>%
   )
 ```
 
-## Performance on test data
+# Performance on test data
 
 Next we use the function `tidycorels::corels_predict()` to apply the Corels rules created on the training data to the test data.
  
@@ -201,13 +201,23 @@ conf_matrix %>%
   kableExtra::kable_styling("hover", full_width = F)
 ```
 
-The accuracy achieved by Corels on the unseen test data is `r conf_matrix$.estimate[1]`. This is the same accuracy the random forest reached in Rebbeca's example. In contrast, Corels rules are easy to read and visualise with an alluvial plot. The screenshot below is one path through the Corels rules (highlighted in darker green) where diabetes was correctly labelled. We can see they are:
+The accuracy achieved by Corels on the unseen test data is `r conf_matrix$.estimate[1]`. This is the same accuracy the random forest reached in Rebbeca's example. In contrast, Corels rules are easy to read and visualise with an alluvial plot. For example, below if we follow one green path through the Corels rules where diabetes was correctly labelled. We can see they are:
 
-1. in older age groups, 
-2. have the highest blood glucose concentraion, 
-3. have insulin that is one of the three highest bins, 
-4. their pedigree (family history) is in one of the three highest value bins, and 
-5. they are in the highest triceps bin (skin fold thickness).  
+1. in older age groups (age_bin1 = 0) 
+2. have the highest blood glucose concentraion (glucose_bin4 = 1), 
+3. have insulin that is one of the three highest bins (insulin_bin1 = 0), 
+4. their pedigree (family history) is in one of the three highest value bins, (pedigree_bin1 = 0) and 
+5. they are in the highest triceps bin (skin fold thickness) (triceps_bin4 = 0).  
+
+```{r, out.width = "80%"}
+diabetes_test_predict$alluvial_df %>%
+  easyalluvial::alluvial_wide(stratum_width = 0.2) +
+  ggplot2::theme_minimal() +
+  ggplot2::labs(
+    title = "Corels if-then-else logic",
+    subtitle = " From truth (far left column) to Corels classification (far right column)"
+  )
+```
 
 Further, below we visualise the distribution of the raw values of each categorised bin used in each rule.
 
