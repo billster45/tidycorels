@@ -137,6 +137,28 @@ corels_mtcars$corels_rules_DT
 
     ## [1] "DT[,corels_label := fifelse( `gear_X3` == 1, 0,fifelse( `wt_bin1` == 1, 1,fifelse( `vs_X0` == 1, 1,0)))]"
 
+And we can view the Corels rules as a [D3 network sankey
+diagram](https://christophergandrud.github.io/networkD3/#sankey) of the
+rules applied to the training data.
+
+``` r
+networkD3::sankeyNetwork(# edges
+                         Links = corels_mtcars$sankey_edges_df, 
+                         Value = "value", 
+                         Source = "source",
+                         Target = "target", 
+                         # nodes
+                         Nodes = corels_mtcars$sankey_nodes_df, 
+                         NodeID = "label",
+                         # format
+                         fontSize = 16, 
+                         nodeWidth = 40,
+                         sinksRight = TRUE
+                         )
+```
+
+![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
 ### Alluvial plot
 
 A dataframe of just the true label, the columns used in the Corels
@@ -147,14 +169,18 @@ work well in an
 plot.
 
 ``` r
-corels_mtcars$alluvial_df %>%
-  easyalluvial::alluvial_wide(stratum_width = 0.2) +
+p <- corels_mtcars$alluvial_df %>%
+  easyalluvial::alluvial_wide(stratum_width = 0.2,
+                              NA_label = "not used") +
   ggplot2::theme_minimal() +
   ggplot2::labs(
     title = "Corels if-then-else logic",
     subtitle = " From truth (far left column) to Corels classification (far right column)"
   )
+p
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 The leftmost column is the true label for each car, either automatic (0)
 or manual (1). The rightmost column is the Corels classification label
@@ -163,24 +189,29 @@ after applying the rules from left to right.
 The alluvial plot clearly shows which rules are important in the
 classifcation and exactly how the classifiation is arrived at. For
 example, if we follow one green path of manual cars (am\_X1 = 1), they
-have more than 3 gears (gear\_X3 = 0), low weight (wt\_bin\_1 ==1) a V
-shaped engine (vs\_x0 = 0).
+have more than 3 gears (gear\_X3 = 0), low weight (wt\_bin\_1 ==1). The
+shape of the engine (vs\_x0) column is not used.
 
-We can also create an interactive version of the alluvial plot.
+We can also create an
+[interactive](https://erblast.github.io/easyalluvial/articles/parcats.html)
+version of the alluvial plot.
 
 ``` r
-p <- easyalluvial::alluvial_wide(corels_mtcars$alluvial_df)
-
-parcats::parcats(p,
-  marginal_histograms = TRUE,
-  data_input = corels_mtcars$alluvial_df
+parcats::parcats(p = p,
+                 data_input = corels_mtcars$alluvial_df,
+                 marginal_histograms = FALSE,
+                 hoveron = 'dimension',
+                 hoverinfo = 'count',
+                 labelfont = list(size = 11)
 )
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
 ### Performance on training data
 
-Either of the dataframes returned can be used to create a confusion
-matrix to examine performance.
+We can also create a confusion matrix to examine the performance of the
+rules.
 
 ``` r
 conf_matrix <-
@@ -193,10 +224,13 @@ conf_matrix <-
 ggplot2::autoplot(conf_matrix, "heatmap")
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
 ### Performance on new data
 
 Use `tidycorels::predict_corels()` to apply the Corels rules to a new
 dataframe (e.g. test data). It also returns the smaller data frame
 intended for an
 [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md)
-plot. Examples can be found in the Articles section.
+plot. Examples can be found in the
+[Articles](https://billster45.github.io/tidycorels/articles/) section.

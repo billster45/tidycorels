@@ -2,7 +2,7 @@
 title: "Corels vs Random Forest"
 date: "`r Sys.Date()`"
 output:
-  github_document:
+  html_document:
     toc: true
     toc_depth: 3
 always_allow_html: yes
@@ -42,6 +42,7 @@ library(tidycorels)
 library(kableExtra)
 library(easyalluvial)
 library(parcats)
+library(networkD3)
 library(formattable)
 
 kable_table <- function(table, title) {
@@ -146,22 +147,37 @@ Here are the Corels rules for the diabetes data.
 diabetes_train_model$corels_console_output[4:10]
 ```
 
-And here are those rules converted to data.table code.
+And we can view the Corels rules as a [D3 network sankey diagram](https://christophergandrud.github.io/networkD3/#sankey) of the rules applied to the training data.
 
-```{r}
-diabetes_train_model$corels_rules_DT
+```{r, out.width = "100%"}
+networkD3::sankeyNetwork(# edges
+                         Links = diabetes_train_model$sankey_edges_df, 
+                         Value = "value", 
+                         Source = "source",
+                         Target = "target", 
+                         # nodes
+                         Nodes = diabetes_train_model$sankey_nodes_df, 
+                         NodeID = "label",
+                         # format
+                         fontSize = 12, 
+                         nodeWidth = 40,
+                         sinksRight = TRUE
+                         )
 ```
 
 A dataframe of just the true label, the columns used in the Corels rules, and the Corels predictions is also available. The columns have been ordered for you to work well in an [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md) plot.
 
 ```{r, out.width = "80%"}
-diabetes_train_model$alluvial_df %>%
-  easyalluvial::alluvial_wide(stratum_width = 0.2) +
+p <- diabetes_train_model$alluvial_df %>%
+  easyalluvial::alluvial_wide(stratum_width = 0.2,
+                              NA_label = "not used",
+                           col_vector_flow =c("lightgreen","#CC6666")) +
   ggplot2::theme_minimal() +
   ggplot2::labs(
     title = "Corels if-then-else logic",
     subtitle = " From truth (far left column) to Corels classification (far right column)"
   )
+p
 ```
 
 # Performance on test data
@@ -171,7 +187,7 @@ Next we use the function `tidycorels::corels_predict()` to apply the Corels rule
 ```{r}
 diabetes_test_predict <-
   tidycorels::predict_corels(
-    model = diabetes_train_model,
+  model = diabetes_train_model,
     new_df = diabetes_test_preprocessed
   )
 ```
@@ -188,35 +204,45 @@ conf_matrix <-
 
 ggplot2::autoplot(conf_matrix, "heatmap")
 
-# https://github.com/tidymodels/yardstick/issues/160
-conf_matrix <- 
-  withr::with_options(c(yardstick.event_first = FALSE),summary(conf_matrix)) %>% 
+summary(conf_matrix, 
+        event_level = "second") %>% 
   dplyr:::mutate(.estimate = round(.estimate, digits = 3)) %>%
   dplyr::select(.metric, .estimate) %>%
-  dplyr::filter(.metric %in% c("accuracy","bal_accuracy","mcc","precision", "recall", "f_meas"))
-
-conf_matrix %>%
+  dplyr::filter(.metric %in% c("accuracy","bal_accuracy","precision", "recall", "f_meas")) %>%
   dplyr::mutate(.estimate = formattable::color_tile("white", "orange")(.estimate)) %>%
-  kableExtra::kable(escape = F) %>%
+  kableExtra::kable(escape = F,
+                   caption = "Corels Test data Performance") %>%
   kableExtra::kable_styling("hover", full_width = F)
 ```
 
-The accuracy achieved by Corels on the unseen test data is `r conf_matrix$.estimate[1]`. This is the same accuracy the random forest reached in Rebbeca's example. In contrast, Corels rules are easy to read and visualise with an alluvial plot. For example, below if we follow one green path through the Corels rules where diabetes was correctly labelled. We can see they are:
+The accuracy achieved by Corels on the unseen test data is `r conf_matrix$.estimate[1]`. This is the same accuracy the random forest reached in Rebbeca's example. In contrast, Corels rules are easy to read and visualise with an alluvial plot. For example, below if we follow the thickest red path through the Corels rules where diabetes was correctly labelled. We can see they are:
 
 1. in older age groups (age_bin1 = 0) 
 2. have the highest blood glucose concentraion (glucose_bin4 = 1), 
-3. have insulin that is one of the three highest bins (insulin_bin1 = 0), 
-4. their pedigree (family history) is in one of the three highest value bins, (pedigree_bin1 = 0) and 
-5. they are in the highest triceps bin (skin fold thickness) (triceps_bin4 = 0).  
 
 ```{r, out.width = "80%"}
-diabetes_test_predict$alluvial_df %>%
-  easyalluvial::alluvial_wide(stratum_width = 0.2) +
+p <- diabetes_test_predict$alluvial_df %>%
+  easyalluvial::alluvial_wide(stratum_width = 0.2,
+                              NA_label = "not used",
+                           col_vector_flow =c("lightgreen","#CC6666")) +
   ggplot2::theme_minimal() +
   ggplot2::labs(
     title = "Corels if-then-else logic",
     subtitle = " From truth (far left column) to Corels classification (far right column)"
   )
+p
+```
+
+We can also create an [interactive](https://erblast.github.io/easyalluvial/articles/parcats.html) version of the alluvial plot.
+
+```{r, out.width = "100%"}
+parcats::parcats(p = p,
+                 data_input = diabetes_test_predict$alluvial_df,
+                 marginal_histograms = FALSE,
+                 hoveron = 'dimension',
+                 hoverinfo = 'count',
+                 labelfont = list(size = 11)
+)
 ```
 
 Further, below we visualise the distribution of the raw values of each categorised bin used in each rule.
