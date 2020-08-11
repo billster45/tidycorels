@@ -1,9 +1,9 @@
 Package: tidycorels
 Type: Package
-Title: tools to help use corels with tidymodels
+Title: Tools to help use corels with tidymodels
 Version: 0.1.0
 Author: Bill Cockerill
-Maintainer: The package maintainer <yourself@somewhere.net>
+Maintainer: Bill Cockerill <billster45@icloud.com>
 Description: The main reason for tidycorels is to convert your dataframe into two text files 
              into the format the R package corels expects, and apply them to your dataframe or a 
              new dataframe (e.g. test data).
