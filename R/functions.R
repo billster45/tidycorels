@@ -99,6 +99,69 @@ capture_corels <- function(corels_output, label_cols, value_delim) {
   return(rules)
 }
 
+#' diagram_corels
+#' creates three data frames: one for the alluvial plot and two for a sankey diagram
+#' @param DT the data table of only the colums to visualise
+#' @return the data table with information not used in the rules removed and nodes and edges for a sankey diagram
+#' @keywords internal
+#' @noRd
+diagram_corels <- function(DT) {
+  # store the column names
+  cols <- colnames(DT)
+  colcount <- length(cols) - 1
+  keep_cols <- cols[2:colcount]
+  first_col <- cols[1]
+  last_col <- cols[length(cols)]
+
+  # Remove information not used (i.e. a rule has fired and later rule values not used)
+  DT1 <- DT[, keep_cols, with = FALSE] # keep only columns used in Corels rules
+  DT1[, ID := .I] # create ID per row
+  DT1 <- data.table::melt(DT1, id.vars = "ID", variable.name = "rule", value.name = "value") # reshape wide to long
+  DT1 <- DT1[order(ID)] # order by the ID
+  DT1[, index := 1:.N, by = ID] # add an index column per event for each ID
+  # If the vale of a rule is 1, then make the value of the next rule NA as it's not used in the Corels rules
+  DT1[, value := ifelse(index > 1 & data.table::shift(value,n =1, type = "lag") ==1, yes = NA, no = value), by = ID]
+  # If the vale of a rule is NA, then make the value of the next rule NA as it's not used in the Corels rules
+  for (col in 1:length(cols)){
+    DT1[, value := ifelse(index > 1 & is.na(data.table::shift(value,n =1, type = "lag")), yes = NA, no = value), by = ID]
+  }
+  DT1_wide <- data.table::dcast(DT1, ID ~ rule, value.var = "value") # rehsape from long to wide
+
+  # create a table to be returned for an alluvial plot
+  alluvial_DT <- cbind(DT[,..first_col], DT1_wide, DT[,..last_col]) # combine the NA'd rule values back alongside the first and last columns (truth and corels label respectively)
+  alluvial_DT <- alluvial_DT[,!c("ID")]
+
+  # SANKEY diagram table preperation
+  DT2 <- cbind(DT1_wide, DT[,..last_col]) # combine the NA'd rule values alongside the corels label
+  DT2 <- data.table::melt(DT2, id.vars = "ID",variable.name = "rule", value.name = "value") # reshape wide to long
+  DT2 <- DT2[order(ID)]
+  DT2 <- stats::na.omit(DT2) # remove rules not fired
+  DT2[, source := paste0(rule," = ",value)] # combine the rule and the value
+  DT2 <- DT2[, c("ID", "source")] # keep only these two columns
+
+  # Sankey NODES
+  nodes <- DT2[, keyby = .(source), .(node_n = .N)] # summarise the rules as nodes
+  nodes <- nodes[, !c("node_n")] # remove the node count
+  nodes[, ID := .I -1] # set the node ID to start at 0 as networkD3::sankeyNetwork() require this
+  data.table::setnames(nodes, old = "source", new = "label")
+
+  # Sankey EDGES
+  DT2[, target := data.table::shift(source, -1), by = ID] # create a new column that is the next rule
+  DT2 <- stats::na.omit(DT2) # get rid of final row that is NA in the column target
+  edges <- DT2[, keyby = .(source, target), .(value = .N)] # create the count between nodes
+  edges <- nodes[edges, on=c(label = "source")] # join the nodes table to replace source with its node ID
+  data.table::setnames(edges, old = "ID", new = "source") # rename the source node ID to source
+  edges <- nodes[edges, on=c(label = "target")] # join the nodes table to replace target with its node ID
+  data.table::setnames(edges, old = "ID", new = "target") # rename the target node ID to target
+  edges <- edges[, .(source,target,value)] # keep only relevant columns
+
+  return(c(list(
+    alluvial_DT = alluvial_DT,
+    nodes = nodes,
+    edges = edges
+  )))
+}
+
 #' tidy_corels
 #'
 #' The tidy_corels() function converts your dataframe into the text file format corels::corels() expects and returns a list of useful R objects.
@@ -109,7 +172,9 @@ capture_corels <- function(corels_output, label_cols, value_delim) {
 #'
 #' Returns those rules converted to data.table::fifelse() code (corels_rules_DT).
 #'
-#' Returns a dataframe of only the true label, the columns used in the rules, and the corels classification applied to your dataframe (alluvial). This dataframe is intended to be used in an easyalluvial plot \url{https://github.com/erblast/easyalluvial/blob/master/README.md}.
+#' Returns a dataframe of only the true label, the columns with their value if they are used by the rules (i.e. if the value is not used it will be NA), and the corels classification applied to your dataframe (alluvial_df). This dataframe is intended to be used in an easyalluvial plot \url{https://github.com/erblast/easyalluvial/blob/master/README.md}.
+#'
+#' Returns two dataframes (sankey_edges_df and sankey_nodes_df) to create a sankey network diagram of the corels rules \url{https://christophergandrud.github.io/networkD3/#sankey}.
 #'
 #' All variables must contain 0 or 1. Consider using recipes::step_dummy() to convert categorical variables to dummy columns. If variable is continous (e.g. age), consider using recipes::step_discretize() before recipes::step_dummy().
 #'
@@ -185,9 +250,13 @@ tidy_corels <- function(df, label_cols, value_delim = "_", ...) {
   # apply DT code to the data frame
   base::eval(base::parse(text = corels_predictors)) # execute the DT code to create alluvial_DT
 
+  # remove information from the alluvial data frame not used by the corels rules. And create nodes
+  # and edges for sankey diagram
+  diagrams <- diagram_corels(DT = alluvial_DT)
+
   # set all columns as factors for plotting
-  for (col in colnames(alluvial_DT)) {
-    data.table::set(alluvial_DT, j = col, value = as.factor(alluvial_DT[[col]]))
+  for (col in colnames(diagrams$alluvial_DT)) {
+    data.table::set(diagrams$alluvial_DT, j = col, value = as.factor(diagrams$alluvial_DT[[col]]))
   }
 
   for (col in colnames(DT)) {
@@ -198,7 +267,9 @@ tidy_corels <- function(df, label_cols, value_delim = "_", ...) {
     df_labelled = data.table::setDF(DT),
     corels_console_output = corels_output,
     corels_rules_DT = DT_code,
-    alluvial_df = data.table::setDF(alluvial_DT)
+    alluvial_df = data.table::setDF(diagrams$alluvial_DT),
+    sankey_nodes_df = data.table::setDF(diagrams$nodes),
+    sankey_edges_df = data.table::setDF(diagrams$edges)
   )))
 }
 
@@ -231,19 +302,24 @@ predict_corels <- function(model, new_df) {
   corels_code <- paste0("alluvial_DT <- new_df_DT[, .(", corels_predictors[[1]], ")]")
   base::eval(base::parse(text = corels_code)) # execute the DT code to create alluvial_DT
 
-  # set all columns as factors for plotting in alluvial
-  for (col in colnames(alluvial_DT)) {
-    data.table::set(alluvial_DT, j = col, value = as.factor(alluvial_DT[[col]]))
+  # remove information from the alluvial data frame not used by the corels rules. And create nodes
+  # and edges for sankey diagram
+  diagrams <- diagram_corels(DT = alluvial_DT)
+
+  # set all columns as factors for plotting
+  for (col in colnames(diagrams$alluvial_DT)) {
+    data.table::set(diagrams$alluvial_DT, j = col, value = as.factor(diagrams$alluvial_DT[[col]]))
   }
 
   for (col in colnames(new_df_DT)) {
     data.table::set(new_df_DT, j = col, value = as.factor(new_df_DT[[col]]))
   }
 
-
   return(c(list(
     new_df_labelled = data.table::setDF(new_df_DT),
     corels_rules_DT = corels_code,
-    alluvial_df = data.table::setDF(alluvial_DT)
+    alluvial_df = data.table::setDF(diagrams$alluvial_DT),
+    sankey_nodes_df = data.table::setDF(diagrams$nodes),
+    sankey_edges_df = data.table::setDF(diagrams$edges)
   )))
 }

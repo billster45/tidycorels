@@ -160,7 +160,8 @@
     <p>The function returns your dataframe with the corels rules applied by adding the column "corels_label".</p>
 <p>Returns the Corels rules from the console output of corels::corels().</p>
 <p>Returns those rules converted to data.table::fifelse() code (corels_rules_DT).</p>
-<p>Returns a dataframe of only the true label, the columns used in the rules, and the corels classification applied to your dataframe (alluvial). This dataframe is intended to be used in an easyalluvial plot <a href='https://github.com/erblast/easyalluvial/blob/master/README.md'>https://github.com/erblast/easyalluvial/blob/master/README.md</a>.</p>
+<p>Returns a dataframe of only the true label, the columns with their value if they are used by the rules (i.e. if the value is not used it will be NA), and the corels classification applied to your dataframe (alluvial_df). This dataframe is intended to be used in an easyalluvial plot <a href='https://github.com/erblast/easyalluvial/blob/master/README.md'>https://github.com/erblast/easyalluvial/blob/master/README.md</a>.</p>
+<p>Returns two dataframes (sankey_edges_df and sankey_nodes_df) to create a sankey network diagram of the corels rules <a href='https://christophergandrud.github.io/networkD3/#sankey'>https://christophergandrud.github.io/networkD3/#sankey</a>.</p>
 <p>All variables must contain 0 or 1. Consider using recipes::step_dummy() to convert categorical variables to dummy columns. If variable is continous (e.g. age), consider using recipes::step_discretize() before recipes::step_dummy().</p>
 <p>The names of the two outcome columns in label_cols argument must end in 0 and 1.</p>
 <p>Consider using recipes::step_integer(recipes::all_outcomes(), zero_based = TRUE) to convert outcome values to 0/1 before using recipes::step_dummy() to create the two outcome columns Corels requires.</p>

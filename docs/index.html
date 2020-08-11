@@ -168,33 +168,53 @@
 <p>And see those rules converted to <code><a href="https://Rdatatable.gitlab.io/data.table/reference/fifelse.html">data.table::fifelse()</a></code> code.</p>
 <div class="sourceCode" id="cb6"><pre class="r"><span class="no">corels_mtcars</span>$<span class="no">corels_rules_DT</span></pre></div>
 <div class="sourceCode" id="cb7"><pre class="sourceCode R"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="co">## [1] "DT[,corels_label := fifelse( `gear_X3` == 1, 0,fifelse( `wt_bin1` == 1, 1,fifelse( `vs_X0` == 1, 1,0)))]"</span></a></code></pre></div>
+<p>And we can view the Corels rules as a <a href="https://christophergandrud.github.io/networkD3/#sankey">D3 network sankey diagram</a> of the rules applied to the training data.</p>
+<div class="sourceCode" id="cb8"><pre class="r"><span class="kw pkg">networkD3</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/networkD3/man/sankeyNetwork.html">sankeyNetwork</a></span>(<span class="co"># edges</span>
+                         <span class="kw">Links</span> <span class="kw">=</span> <span class="no">corels_mtcars</span>$<span class="no">sankey_edges_df</span>,
+                         <span class="kw">Value</span> <span class="kw">=</span> <span class="st">"value"</span>,
+                         <span class="kw">Source</span> <span class="kw">=</span> <span class="st">"source"</span>,
+                         <span class="kw">Target</span> <span class="kw">=</span> <span class="st">"target"</span>,
+                         <span class="co"># nodes</span>
+                         <span class="kw">Nodes</span> <span class="kw">=</span> <span class="no">corels_mtcars</span>$<span class="no">sankey_nodes_df</span>,
+                         <span class="kw">NodeID</span> <span class="kw">=</span> <span class="st">"label"</span>,
+                         <span class="co"># format</span>
+                         <span class="kw">fontSize</span> <span class="kw">=</span> <span class="fl">16</span>,
+                         <span class="kw">nodeWidth</span> <span class="kw">=</span> <span class="fl">40</span>,
+                         <span class="kw">sinksRight</span> <span class="kw">=</span> <span class="fl">TRUE</span>
+                         )</pre></div>
+<p><img src="README_files/figure-gfm/unnamed-chunk-6-1.png"><!-- --></p>
 </div>
 <div id="alluvial-plot" class="section level3">
 <h3 class="hasAnchor">
 <a href="#alluvial-plot" class="anchor"></a>Alluvial plot</h3>
 <p>A dataframe of just the true label, the columns used in the Corels rules, and the Corels label from those rules is also available. The columns have been ordered in the order of the Corels rules so that they work well in an <a href="https://github.com/erblast/easyalluvial/blob/master/README.md">alluvial</a> plot.</p>
-<div class="sourceCode" id="cb8"><pre class="r"><span class="no">corels_mtcars</span>$<span class="no">alluvial_df</span> <span class="kw">%&gt;%</span>
-  <span class="kw pkg">easyalluvial</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/easyalluvial/man/alluvial_wide.html">alluvial_wide</a></span>(<span class="kw">stratum_width</span> <span class="kw">=</span> <span class="fl">0.2</span>) +
+<div class="sourceCode" id="cb9"><pre class="r"><span class="no">p</span> <span class="kw">&lt;-</span> <span class="no">corels_mtcars</span>$<span class="no">alluvial_df</span> <span class="kw">%&gt;%</span>
+  <span class="kw pkg">easyalluvial</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/easyalluvial/man/alluvial_wide.html">alluvial_wide</a></span>(<span class="kw">stratum_width</span> <span class="kw">=</span> <span class="fl">0.2</span>,
+                              <span class="kw">NA_label</span> <span class="kw">=</span> <span class="st">"not used"</span>) +
   <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_minimal</a></span>() +
   <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span>(
     <span class="kw">title</span> <span class="kw">=</span> <span class="st">"Corels if-then-else logic"</span>,
     <span class="kw">subtitle</span> <span class="kw">=</span> <span class="st">" From truth (far left column) to Corels classification (far right column)"</span>
-  )</pre></div>
+  )
+<span class="no">p</span></pre></div>
+<p><img src="README_files/figure-gfm/unnamed-chunk-7-1.png"><!-- --></p>
 <p>The leftmost column is the true label for each car, either automatic (0) or manual (1). The rightmost column is the Corels classification label after applying the rules from left to right.</p>
-<p>The alluvial plot clearly shows which rules are important in the classifcation and exactly how the classifiation is arrived at. For example, if we follow one green path of manual cars (am_X1 = 1), they have more than 3 gears (gear_X3 = 0), low weight (wt_bin_1 ==1) a V shaped engine (vs_x0 = 0).</p>
-<p>We can also create an interactive version of the alluvial plot.</p>
-<div class="sourceCode" id="cb9"><pre class="r"><span class="no">p</span> <span class="kw">&lt;-</span> <span class="kw pkg">easyalluvial</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/easyalluvial/man/alluvial_wide.html">alluvial_wide</a></span>(<span class="no">corels_mtcars</span>$<span class="no">alluvial_df</span>)
-
-<span class="kw pkg">parcats</span><span class="kw ns">::</span><span class="fu"><a href="https://erblast.github.io/parcats//reference/parcats.html">parcats</a></span>(<span class="no">p</span>,
-  <span class="kw">marginal_histograms</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
-  <span class="kw">data_input</span> <span class="kw">=</span> <span class="no">corels_mtcars</span>$<span class="no">alluvial_df</span>
+<p>The alluvial plot clearly shows which rules are important in the classifcation and exactly how the classifiation is arrived at. For example, if we follow one green path of manual cars (am_X1 = 1), they have more than 3 gears (gear_X3 = 0), low weight (wt_bin_1 ==1). The shape of the engine (vs_x0) column is not used.</p>
+<p>We can also create an <a href="https://erblast.github.io/easyalluvial/articles/parcats.html">interactive</a> version of the alluvial plot.</p>
+<div class="sourceCode" id="cb10"><pre class="r"><span class="kw pkg">parcats</span><span class="kw ns">::</span><span class="fu"><a href="https://erblast.github.io/parcats//reference/parcats.html">parcats</a></span>(<span class="kw">p</span> <span class="kw">=</span> <span class="no">p</span>,
+                 <span class="kw">data_input</span> <span class="kw">=</span> <span class="no">corels_mtcars</span>$<span class="no">alluvial_df</span>,
+                 <span class="kw">marginal_histograms</span> <span class="kw">=</span> <span class="fl">FALSE</span>,
+                 <span class="kw">hoveron</span> <span class="kw">=</span> <span class="st">'dimension'</span>,
+                 <span class="kw">hoverinfo</span> <span class="kw">=</span> <span class="st">'count'</span>,
+                 <span class="kw">labelfont</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">size</span> <span class="kw">=</span> <span class="fl">11</span>)
 )</pre></div>
+<p><img src="README_files/figure-gfm/unnamed-chunk-8-1.png"><!-- --></p>
 </div>
 <div id="performance-on-training-data" class="section level3">
 <h3 class="hasAnchor">
 <a href="#performance-on-training-data" class="anchor"></a>Performance on training data</h3>
-<p>Either of the dataframes returned can be used to create a confusion matrix to examine performance.</p>
-<div class="sourceCode" id="cb10"><pre class="r"><span class="no">conf_matrix</span> <span class="kw">&lt;-</span>
+<p>We can also create a confusion matrix to examine the performance of the rules.</p>
+<div class="sourceCode" id="cb11"><pre class="r"><span class="no">conf_matrix</span> <span class="kw">&lt;-</span>
   <span class="no">corels_mtcars</span>$<span class="no">alluvial_df</span> <span class="kw">%&gt;%</span>
   <span class="kw pkg">yardstick</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/yardstick/man/conf_mat.html">conf_mat</a></span>(
     <span class="kw">truth</span> <span class="kw">=</span> <span class="st">"am_X1"</span>,
@@ -202,11 +222,12 @@
   )
 
 <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span>(<span class="no">conf_matrix</span>, <span class="st">"heatmap"</span>)</pre></div>
+<p><img src="README_files/figure-gfm/unnamed-chunk-9-1.png"><!-- --></p>
 </div>
 <div id="performance-on-new-data" class="section level3">
 <h3 class="hasAnchor">
 <a href="#performance-on-new-data" class="anchor"></a>Performance on new data</h3>
-<p>Use <code><a href="reference/predict_corels.html">tidycorels::predict_corels()</a></code> to apply the Corels rules to a new dataframe (e.g. test data). It also returns the smaller data frame intended for an <a href="https://github.com/erblast/easyalluvial/blob/master/README.md">alluvial</a> plot. Examples can be found in the Articles section.</p>
+<p>Use <code><a href="reference/predict_corels.html">tidycorels::predict_corels()</a></code> to apply the Corels rules to a new dataframe (e.g. test data). It also returns the smaller data frame intended for an <a href="https://github.com/erblast/easyalluvial/blob/master/README.md">alluvial</a> plot. Examples can be found in the <a href="https://billster45.github.io/tidycorels/articles/">Articles</a> section.</p>
 </div>
 </div>
 </div>

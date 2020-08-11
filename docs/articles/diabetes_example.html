@@ -79,12 +79,12 @@
 
       
 
-      </header><script src="diabetes_example_files/kePrint-0.0.1/kePrint.js"></script><div class="row">
+      </header><script src="diabetes_example_files/kePrint-0.0.1/kePrint.js"></script><script src="diabetes_example_files/htmlwidgets-1.5.1/htmlwidgets.js"></script><script src="diabetes_example_files/d3-4.5.0/d3.min.js"></script><script src="diabetes_example_files/sankey-1/sankey.js"></script><script src="diabetes_example_files/sankeyNetwork-binding-0.4/sankeyNetwork.js"></script><script src="diabetes_example_files/plotly.js-1.47.4/./plotly.min.js"></script><script src="diabetes_example_files/parcats-binding-0.0.1/parcats.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Corels vs Random Forest</h1>
             
-            <h4 class="date">2020-07-26</h4>
+            <h4 class="date">2020-08-11</h4>
       
       
       <div class="hidden name"><code>diabetes_example.Rmd</code></div>
@@ -117,6 +117,7 @@
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">kableExtra</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">easyalluvial</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">parcats</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">networkD3</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">formattable</span>)
 
 <span class="no">kable_table</span> <span class="kw">&lt;-</span> <span class="kw">function</span>(<span class="no">table</span>, <span class="no">title</span>) {
@@ -1169,17 +1170,32 @@ diabetes_X1
 <span class="co">#&gt; [5] "else if ({pedigree:bin1}) then ({diabetes:X0})"</span>
 <span class="co">#&gt; [6] "else if ({triceps:bin4}) then ({diabetes:X1})" </span>
 <span class="co">#&gt; [7] "else ({diabetes:X0})"</span></pre></body></html></div>
-<p>And here are those rules converted to data.table code.</p>
-<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="no">diabetes_train_model</span>$<span class="no">corels_rules_DT</span>
-<span class="co">#&gt; [1] "DT[,corels_label := fifelse( `age_bin1` == 1, 0,fifelse( `glucose_bin4` == 1, 1,fifelse( `insulin_bin1` == 1, 0,fifelse( `pedigree_bin1` == 1, 0,fifelse( `triceps_bin4` == 1, 1,0)))))]"</span></pre></body></html></div>
-<p>A dataframe of just the true label, the columns used in the Corels rules, and the Corels predictions is also available. The columns have been ordered for you to work well in an <a href="https://github.com/erblast/easyalluvial/blob/master/README.md">alluvial</a> plot.</p>
-<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">diabetes_train_model</span>$<span class="no">alluvial_df</span> <span class="kw">%&gt;%</span>
-  <span class="kw pkg">easyalluvial</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/easyalluvial/man/alluvial_wide.html">alluvial_wide</a></span>(<span class="kw">stratum_width</span> <span class="kw">=</span> <span class="fl">0.2</span>) +
+<p>And we can view the Corels rules as a <a href="https://christophergandrud.github.io/networkD3/#sankey">D3 network sankey diagram</a> of the rules applied to the training data.</p>
+<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="kw pkg">networkD3</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/networkD3/man/sankeyNetwork.html">sankeyNetwork</a></span>(<span class="co"># edges</span>
+                         <span class="kw">Links</span> <span class="kw">=</span> <span class="no">diabetes_train_model</span>$<span class="no">sankey_edges_df</span>,
+                         <span class="kw">Value</span> <span class="kw">=</span> <span class="st">"value"</span>,
+                         <span class="kw">Source</span> <span class="kw">=</span> <span class="st">"source"</span>,
+                         <span class="kw">Target</span> <span class="kw">=</span> <span class="st">"target"</span>,
+                         <span class="co"># nodes</span>
+                         <span class="kw">Nodes</span> <span class="kw">=</span> <span class="no">diabetes_train_model</span>$<span class="no">sankey_nodes_df</span>,
+                         <span class="kw">NodeID</span> <span class="kw">=</span> <span class="st">"label"</span>,
+                         <span class="co"># format</span>
+                         <span class="kw">fontSize</span> <span class="kw">=</span> <span class="fl">12</span>,
+                         <span class="kw">nodeWidth</span> <span class="kw">=</span> <span class="fl">40</span>,
+                         <span class="kw">sinksRight</span> <span class="kw">=</span> <span class="fl">TRUE</span>
+                         )</pre></body></html></div>
+<div id="htmlwidget-9ef2a453e4130af6d84a" style="width:100%;height:432.632880098888px;" class="sankeyNetwork html-widget"></div>
+<script type="application/json" data-for="htmlwidget-9ef2a453e4130af6d84a">{"x":{"links":{"source":[0,0,1,4,4,5,6,6,7,8,8,9,10,11],"target":[4,5,2,6,7,3,8,9,2,10,11,2,2,3],"value":[284,122,170,213,71,122,151,62,71,113,38,62,113,38]},"nodes":{"name":["age_bin1 = 0","age_bin1 = 1","corels_label = 0","corels_label = 1","glucose_bin4 = 0","glucose_bin4 = 1","insulin_bin1 = 0","insulin_bin1 = 1","pedigree_bin1 = 0","pedigree_bin1 = 1","triceps_bin4 = 0","triceps_bin4 = 1"],"group":["age_bin1 = 0","age_bin1 = 1","corels_label = 0","corels_label = 1","glucose_bin4 = 0","glucose_bin4 = 1","insulin_bin1 = 0","insulin_bin1 = 1","pedigree_bin1 = 0","pedigree_bin1 = 1","triceps_bin4 = 0","triceps_bin4 = 1"]},"options":{"NodeID":"label","NodeGroup":"label","LinkGroup":null,"colourScale":"d3.scaleOrdinal(d3.schemeCategory20);","fontSize":12,"fontFamily":null,"nodeWidth":40,"nodePadding":10,"units":"","margin":{"top":null,"right":null,"bottom":null,"left":null},"iterations":32,"sinksRight":true}},"evals":[],"jsHooks":[]}</script><p>A dataframe of just the true label, the columns used in the Corels rules, and the Corels predictions is also available. The columns have been ordered for you to work well in an <a href="https://github.com/erblast/easyalluvial/blob/master/README.md">alluvial</a> plot.</p>
+<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">p</span> <span class="kw">&lt;-</span> <span class="no">diabetes_train_model</span>$<span class="no">alluvial_df</span> <span class="kw">%&gt;%</span>
+  <span class="kw pkg">easyalluvial</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/easyalluvial/man/alluvial_wide.html">alluvial_wide</a></span>(<span class="kw">stratum_width</span> <span class="kw">=</span> <span class="fl">0.2</span>,
+                              <span class="kw">NA_label</span> <span class="kw">=</span> <span class="st">"not used"</span>,
+                           <span class="kw">col_vector_flow</span> <span class="kw">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"lightgreen"</span>,<span class="st">"#CC6666"</span>)) +
   <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_minimal</a></span>() +
   <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span>(
     <span class="kw">title</span> <span class="kw">=</span> <span class="st">"Corels if-then-else logic"</span>,
     <span class="kw">subtitle</span> <span class="kw">=</span> <span class="st">" From truth (far left column) to Corels classification (far right column)"</span>
-  )</pre></body></html></div>
+  )
+<span class="no">p</span></pre></body></html></div>
 <p><img src="diabetes_example_files/figure-html/unnamed-chunk-7-1.png" width="80%"></p>
 </div>
 <div id="performance-on-test-data" class="section level1">
@@ -1188,7 +1204,7 @@ diabetes_X1
 <p>Next we use the function <code>tidycorels::corels_predict()</code> to apply the Corels rules created on the training data to the test data.</p>
 <div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="no">diabetes_test_predict</span> <span class="kw">&lt;-</span>
   <span class="kw pkg">tidycorels</span><span class="kw ns">::</span><span class="fu"><a href="../reference/predict_corels.html">predict_corels</a></span>(
-    <span class="kw">model</span> <span class="kw">=</span> <span class="no">diabetes_train_model</span>,
+  <span class="kw">model</span> <span class="kw">=</span> <span class="no">diabetes_train_model</span>,
     <span class="kw">new_df</span> <span class="kw">=</span> <span class="no">diabetes_test_preprocessed</span>
   )</pre></body></html></div>
 <p>We can now use the test data that has been labelled using the Corels rules to compare to the true labe with a confusion matrix and performance statistics.</p>
@@ -1202,18 +1218,19 @@ diabetes_X1
 <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span>(<span class="no">conf_matrix</span>, <span class="st">"heatmap"</span>)</pre></body></html></div>
 <p><img src="diabetes_example_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
 <div class="sourceCode" id="cb10"><html><body><pre class="r">
-<span class="co"># https://github.com/tidymodels/yardstick/issues/160</span>
-<span class="no">conf_matrix</span> <span class="kw">&lt;-</span>
-  <span class="kw pkg">withr</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/withr/man/with_options.html">with_options</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="kw">yardstick.event_first</span> <span class="kw">=</span> <span class="fl">FALSE</span>),<span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>(<span class="no">conf_matrix</span>)) <span class="kw">%&gt;%</span>
+<span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>(<span class="no">conf_matrix</span>,
+        <span class="kw">event_level</span> <span class="kw">=</span> <span class="st">"second"</span>) <span class="kw">%&gt;%</span>
   <span class="kw pkg">dplyr</span><span class="kw ns">:::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">.estimate</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">round</a></span>(<span class="no">.estimate</span>, <span class="kw">digits</span> <span class="kw">=</span> <span class="fl">3</span>)) <span class="kw">%&gt;%</span>
   <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="no">.metric</span>, <span class="no">.estimate</span>) <span class="kw">%&gt;%</span>
-  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span>(<span class="no">.metric</span> <span class="kw">%in%</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"accuracy"</span>,<span class="st">"bal_accuracy"</span>,<span class="st">"mcc"</span>,<span class="st">"precision"</span>, <span class="st">"recall"</span>, <span class="st">"f_meas"</span>))
-
-<span class="no">conf_matrix</span> <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span>(<span class="no">.metric</span> <span class="kw">%in%</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"accuracy"</span>,<span class="st">"bal_accuracy"</span>,<span class="st">"precision"</span>, <span class="st">"recall"</span>, <span class="st">"f_meas"</span>)) <span class="kw">%&gt;%</span>
   <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">.estimate</span> <span class="kw">=</span> <span class="kw pkg">formattable</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/formattable/man/color_tile.html">color_tile</a></span>(<span class="st">"white"</span>, <span class="st">"orange"</span>)(<span class="no">.estimate</span>)) <span class="kw">%&gt;%</span>
-  <span class="kw pkg">kableExtra</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/reexports.html">kable</a></span>(<span class="kw">escape</span> <span class="kw">=</span> <span class="no">F</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">kableExtra</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/reexports.html">kable</a></span>(<span class="kw">escape</span> <span class="kw">=</span> <span class="no">F</span>,
+                   <span class="kw">caption</span> <span class="kw">=</span> <span class="st">"Corels Test data Performance"</span>) <span class="kw">%&gt;%</span>
   <span class="kw pkg">kableExtra</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/kable_styling.html">kable_styling</a></span>(<span class="st">"hover"</span>, <span class="kw">full_width</span> <span class="kw">=</span> <span class="no">F</span>)</pre></body></html></div>
 <table class="table table table-hover">
+<caption>
+Corels Test data Performance
+</caption>
 <thead><tr>
 <th style="text-align:left;">
 .metric
@@ -1233,18 +1250,10 @@ accuracy
 </tr>
 <tr>
 <td style="text-align:left;">
-mcc
-</td>
-<td style="text-align:left;">
-<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffffff">0.439</span>
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
 bal_accuracy
 </td>
 <td style="text-align:left;">
-<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffae19">0.714</span>
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffb836">0.714</span>
 </td>
 </tr>
 <tr>
@@ -1252,7 +1261,7 @@ bal_accuracy
 precision
 </td>
 <td style="text-align:left;">
-<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffbb40">0.667</span>
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffd589">0.667</span>
 </td>
 </tr>
 <tr>
@@ -1260,7 +1269,7 @@ precision
 recall
 </td>
 <td style="text-align:left;">
-<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffcf78">0.600</span>
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffffff">0.600</span>
 </td>
 </tr>
 <tr>
@@ -1268,29 +1277,38 @@ recall
 f_meas
 </td>
 <td style="text-align:left;">
-<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffc65e">0.632</span>
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffebc6">0.632</span>
 </td>
 </tr>
 </tbody>
 </table>
-<p>The accuracy achieved by Corels on the unseen test data is 0.745. This is the same accuracy the random forest reached in Rebbeca’s example. In contrast, Corels rules are easy to read and visualise with an alluvial plot. For example, below if we follow one green path through the Corels rules where diabetes was correctly labelled. We can see they are:</p>
+<p>The accuracy achieved by Corels on the unseen test data is . This is the same accuracy the random forest reached in Rebbeca’s example. In contrast, Corels rules are easy to read and visualise with an alluvial plot. For example, below if we follow the thickest red path through the Corels rules where diabetes was correctly labelled. We can see they are:</p>
 <ol style="list-style-type: decimal">
 <li>in older age groups (age_bin1 = 0)</li>
 <li>have the highest blood glucose concentraion (glucose_bin4 = 1),</li>
-<li>have insulin that is one of the three highest bins (insulin_bin1 = 0),</li>
-<li>their pedigree (family history) is in one of the three highest value bins, (pedigree_bin1 = 0) and</li>
-<li>they are in the highest triceps bin (skin fold thickness) (triceps_bin4 = 0).</li>
 </ol>
-<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="no">diabetes_test_predict</span>$<span class="no">alluvial_df</span> <span class="kw">%&gt;%</span>
-  <span class="kw pkg">easyalluvial</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/easyalluvial/man/alluvial_wide.html">alluvial_wide</a></span>(<span class="kw">stratum_width</span> <span class="kw">=</span> <span class="fl">0.2</span>) +
+<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="no">p</span> <span class="kw">&lt;-</span> <span class="no">diabetes_test_predict</span>$<span class="no">alluvial_df</span> <span class="kw">%&gt;%</span>
+  <span class="kw pkg">easyalluvial</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/easyalluvial/man/alluvial_wide.html">alluvial_wide</a></span>(<span class="kw">stratum_width</span> <span class="kw">=</span> <span class="fl">0.2</span>,
+                              <span class="kw">NA_label</span> <span class="kw">=</span> <span class="st">"not used"</span>,
+                           <span class="kw">col_vector_flow</span> <span class="kw">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"lightgreen"</span>,<span class="st">"#CC6666"</span>)) +
   <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_minimal</a></span>() +
   <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span>(
     <span class="kw">title</span> <span class="kw">=</span> <span class="st">"Corels if-then-else logic"</span>,
     <span class="kw">subtitle</span> <span class="kw">=</span> <span class="st">" From truth (far left column) to Corels classification (far right column)"</span>
-  )</pre></body></html></div>
+  )
+<span class="no">p</span></pre></body></html></div>
 <p><img src="diabetes_example_files/figure-html/unnamed-chunk-10-1.png" width="80%"></p>
-<p>Further, below we visualise the distribution of the raw values of each categorised bin used in each rule.</p>
-<div class="sourceCode" id="cb12"><html><body><pre class="r"><span class="no">diabetes_recipe_non_dummy</span> <span class="kw">&lt;-</span>
+<p>We can also create an <a href="https://erblast.github.io/easyalluvial/articles/parcats.html">interactive</a> version of the alluvial plot.</p>
+<div class="sourceCode" id="cb12"><html><body><pre class="r"><span class="kw pkg">parcats</span><span class="kw ns">::</span><span class="fu"><a href="https://erblast.github.io/parcats//reference/parcats.html">parcats</a></span>(<span class="kw">p</span> <span class="kw">=</span> <span class="no">p</span>,
+                 <span class="kw">data_input</span> <span class="kw">=</span> <span class="no">diabetes_test_predict</span>$<span class="no">alluvial_df</span>,
+                 <span class="kw">marginal_histograms</span> <span class="kw">=</span> <span class="fl">FALSE</span>,
+                 <span class="kw">hoveron</span> <span class="kw">=</span> <span class="st">'dimension'</span>,
+                 <span class="kw">hoverinfo</span> <span class="kw">=</span> <span class="st">'count'</span>,
+                 <span class="kw">labelfont</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">size</span> <span class="kw">=</span> <span class="fl">11</span>)
+)</pre></body></html></div>
+<div id="htmlwidget-f0b71748aeb1639bcc82" style="width:100%;height:432.632880098888px;" class="parcats html-widget"></div>
+<script type="application/json" data-for="htmlwidget-f0b71748aeb1639bcc82">{"x":{"traces":{"parcats":{"type":"parcats","dimensions":[{"label":"diabetes_X1","values":["0","0","0","0","0","0","1","1","1","1","1","1"],"categoryorder":"array","categoryarray":["1","0"]},{"label":"age_bin1","values":["0","0","0","0","0","1","0","0","0","0","0","1"],"categoryorder":"array","categoryarray":["1","0"]},{"label":"glucose_bin4","values":["0","0","0","0","1","not used","0","0","0","0","1","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"insulin_bin1","values":["0","0","0","1","not used","not used","0","0","0","1","not used","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"pedigree_bin1","values":["0","0","1","not used","not used","not used","0","0","1","not used","not used","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"triceps_bin4","values":["0","1","not used","not used","not used","not used","0","1","not used","not used","not used","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"corels_label","values":["0","1","0","0","1","0","0","1","0","0","1","0"],"categoryorder":"array","categoryarray":["1","0"]}],"counts":[16,11,9,34,10,42,10,10,6,5,32,7],"line":{"shape":"hspline","color":["lightgreen","lightgreen","lightgreen","lightgreen","lightgreen","lightgreen","#CC6666","#CC6666","#CC6666","#CC6666","#CC6666","#CC6666"]},"hoveron":"dimension","hoverinfo":"count","labelfont":{"size":11},"arrangement":"perpendicular","bundlecolors":true,"sortpaths":"forward","tickfont":null,"domain":{"y":[0,1]}}},"layout":[],"shapes":[],"shapes_original":[],"map_curve":[],"map_trace_2_shape":[],"map_type":[],"map_color":[],"parcats_cols":["lightgreen","lightgreen","lightgreen","lightgreen","lightgreen","lightgreen","#CC6666","#CC6666","#CC6666","#CC6666","#CC6666","#CC6666"],"imp":false},"evals":[],"jsHooks":[]}</script><p>Further, below we visualise the distribution of the raw values of each categorised bin used in each rule.</p>
+<div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="no">diabetes_recipe_non_dummy</span> <span class="kw">&lt;-</span>
   <span class="kw pkg">recipes</span><span class="kw ns">::</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/recipe.html">recipe</a></span>(<span class="no">diabetes</span> ~ <span class="no">pregnant</span> + <span class="no">glucose</span> + <span class="no">pressure</span> + <span class="no">triceps</span> + <span class="no">insulin</span> + <span class="no">mass</span> + <span class="no">pedigree</span> + <span class="no">age</span>,
                   <span class="kw">data</span> <span class="kw">=</span> <span class="no">diabetes_clean</span>) <span class="kw">%&gt;%</span>
   <span class="kw pkg">recipes</span><span class="kw ns">::</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/step_normalize.html">step_normalize</a></span>(<span class="fu">all_numeric</span>()) <span class="kw">%&gt;%</span>
@@ -1330,7 +1348,7 @@ f_meas
 <span class="no">p4</span> <span class="kw">&lt;-</span> <span class="fu">plot_fun</span>(<span class="kw">X</span> <span class="kw">=</span> <span class="no">PEDIGREE</span>, <span class="kw">Y</span> <span class="kw">=</span> <span class="no">pedigree</span>, <span class="kw">bin</span> <span class="kw">=</span> <span class="no">bin1</span>)
 <span class="no">p5</span> <span class="kw">&lt;-</span> <span class="fu">plot_fun</span>(<span class="kw">X</span> <span class="kw">=</span> <span class="no">TRICEPS</span>, <span class="kw">Y</span> <span class="kw">=</span> <span class="no">triceps</span>, <span class="kw">bin</span> <span class="kw">=</span> <span class="no">bin4</span>)
 <span class="kw pkg">cowplot</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/cowplot/man/plot_grid.html">plot_grid</a></span>(<span class="no">p1</span>, <span class="no">p2</span>, <span class="no">p3</span>, <span class="no">p4</span>, <span class="no">p5</span>)</pre></body></html></div>
-<p><img src="diabetes_example_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
+<p><img src="diabetes_example_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
 <p>The plots from left to right highlight which bin is used in each Corels rule in the sequential order of the rules. The plot is created by combining the <a href="https://recipes.tidymodels.org/reference/step_discretize.html">discretised</a> and one-hot encoded data with the raw column values.</p>
 </div>
   </div>
