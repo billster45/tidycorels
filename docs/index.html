@@ -5,13 +5,13 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>tools to help use corels with tidymodels • tidycorels</title>
+<title>Tools to help use corels with tidymodels • tidycorels</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="bootstrap-toc.css">
 <script src="bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
-<script src="pkgdown.js"></script><meta property="og:title" content="tools to help use corels with tidymodels">
+<script src="pkgdown.js"></script><meta property="og:title" content="Tools to help use corels with tidymodels">
 <meta property="og:description" content="The main reason for tidycorels is to convert your dataframe into two text files 
              into the format the R package corels expects, and apply them to your dataframe or a 
              new dataframe (e.g. test data).">
@@ -95,6 +95,7 @@
 <li><a href="#prepare-dataframe-for-corels">Prepare dataframe for Corels</a></li>
 <li><a href="#alluvial-plot">Alluvial plot</a></li>
 <li><a href="#performance-on-training-data">Performance on training data</a></li>
+<li><a href="#performance-of-each-rule">Performance of each rule</a></li>
 <li><a href="#performance-on-new-data">Performance on new data</a></li>
 </ul>
 </li>
@@ -224,6 +225,94 @@
 <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span>(<span class="no">conf_matrix</span>, <span class="st">"heatmap"</span>)</pre></div>
 <p><img src="README_files/figure-gfm/unnamed-chunk-9-1.png"><!-- --></p>
 </div>
+<div id="performance-of-each-rule" class="section level3">
+<h3 class="hasAnchor">
+<a href="#performance-of-each-rule" class="anchor"></a>Performance of each rule</h3>
+<p>A data frame of the performance of each rule is also provided.</p>
+<div class="sourceCode" id="cb12"><pre class="r"><span class="no">corels_mtcars</span>$<span class="no">rule_performance_df</span> <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">rule_perc_correct</span> <span class="kw">=</span> <span class="kw pkg">formattable</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/formattable/man/color_tile.html">color_tile</a></span>(<span class="st">"white"</span>, <span class="st">"orange"</span>)(<span class="no">rule_perc_correct</span>)) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">rule_fire_count</span> <span class="kw">=</span> <span class="kw pkg">formattable</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/formattable/man/color_tile.html">color_tile</a></span>(<span class="st">"white"</span>, <span class="st">"lightblue"</span>)(<span class="no">rule_fire_count</span>)) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">kableExtra</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/reexports.html">kable</a></span>(<span class="kw">escape</span> <span class="kw">=</span> <span class="no">F</span>,
+                   <span class="kw">caption</span> <span class="kw">=</span> <span class="st">"Corels Performance for each rule in order"</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">kableExtra</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/kable_styling.html">kable_styling</a></span>(<span class="st">"hover"</span>, <span class="kw">full_width</span> <span class="kw">=</span> <span class="no">F</span>)</pre></div>
+<table class="table table table-hover">
+<caption>
+<p>Corels Performance for each rule in order</p>
+</caption>
+<thead><tr>
+<th style="text-align:left;">
+<p>rule</p>
+</th>
+<th style="text-align:left;">
+<p>rule_fire_count</p>
+</th>
+<th style="text-align:right;">
+<p>rule_correct</p>
+</th>
+<th style="text-align:left;">
+<p>rule_perc_correct</p>
+</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+<p>gear_X3</p>
+</td>
+<td style="text-align:left;">
+<p><span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #add8e6">15</span></p>
+</td>
+<td style="text-align:right;">
+<p>15</p>
+</td>
+<td style="text-align:left;">
+<p><span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffa500">100</span></p>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<p>wt_bin1</p>
+</td>
+<td style="text-align:left;">
+<p><span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #eef7fa">7</span></p>
+</td>
+<td style="text-align:right;">
+<p>7</p>
+</td>
+<td style="text-align:left;">
+<p><span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffa500">100</span></p>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<p>vs_X0</p>
+</td>
+<td style="text-align:left;">
+<p><span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffffff">5</span></p>
+</td>
+<td style="text-align:right;">
+<p>5</p>
+</td>
+<td style="text-align:left;">
+<p><span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffa500">100</span></p>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<p>else</p>
+</td>
+<td style="text-align:left;">
+<p><span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffffff">5</span></p>
+</td>
+<td style="text-align:right;">
+<p>4</p>
+</td>
+<td style="text-align:left;">
+<p><span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffffff">80</span></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
 <div id="performance-on-new-data" class="section level3">
 <h3 class="hasAnchor">
 <a href="#performance-on-new-data" class="anchor"></a>Performance on new data</h3>
@@ -244,7 +333,7 @@
 <div class="developers">
 <h2>Developers</h2>
 <ul class="list-unstyled">
-<li>The package maintainer <br><small class="roles"> Maintainer </small>  </li>
+<li>Bill Cockerill <br><small class="roles"> Maintainer </small>  </li>
 </ul>
 </div>
 
@@ -253,7 +342,7 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by The package maintainer.</p>
+  <p>Developed by Bill Cockerill.</p>
 </div>
 
 <div class="pkgdown">

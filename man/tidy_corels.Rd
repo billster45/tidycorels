@@ -27,6 +27,8 @@ Returns those rules converted to data.table::fifelse() code (corels_rules_DT).
 
 Returns a dataframe of only the true label, the columns with their value if they are used by the rules (i.e. if the value is not used it will be NA), and the corels classification applied to your dataframe (alluvial_df). This dataframe is intended to be used in an easyalluvial plot \url{https://github.com/erblast/easyalluvial/blob/master/README.md}.
 
+Returns a dataframe of the peformance of each rule in the order of Corels rules (rule_performance_df).
+
 Returns two dataframes (sankey_edges_df and sankey_nodes_df) to create a sankey network diagram of the corels rules \url{https://christophergandrud.github.io/networkD3/#sankey}.
 
 All variables must contain 0 or 1. Consider using recipes::step_dummy() to convert categorical variables to dummy columns. If variable is continous (e.g. age), consider using recipes::step_discretize() before recipes::step_dummy().

@@ -160,7 +160,19 @@ conf_matrix <-
 ggplot2::autoplot(conf_matrix, "heatmap")
 ```
 
+### Performance of each rule
+
+A data frame of the performance of each rule is also provided.
+
+```{r}
+corels_mtcars$rule_performance_df %>% 
+  dplyr::mutate(rule_perc_correct = formattable::color_tile("white", "orange")(rule_perc_correct)) %>%
+  dplyr::mutate(rule_fire_count = formattable::color_tile("white", "lightblue")(rule_fire_count)) %>%
+  kableExtra::kable(escape = F,
+                   caption = "Corels Performance for each rule in order") %>%
+  kableExtra::kable_styling("hover", full_width = F)
+```
+
 ### Performance on new data
 
 Use `tidycorels::predict_corels()` to apply the Corels rules to a new dataframe (e.g. test data). It also returns the smaller data frame intended for an [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md) plot. Examples can be found in the [Articles](https://billster45.github.io/tidycorels/articles/) section.
-

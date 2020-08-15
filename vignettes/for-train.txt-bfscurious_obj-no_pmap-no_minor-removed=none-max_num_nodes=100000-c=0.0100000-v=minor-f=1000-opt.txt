@@ -1,0 +1,1 @@
+{creditHistory:no.credits.all.paid}~0;{creditHistory:critical.other.existing.credit}~1;{checkingStatus:X.0}~0;default~1
