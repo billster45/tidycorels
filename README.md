@@ -7,6 +7,7 @@ tidycorels
       - [Prepare dataframe for Corels](#prepare-dataframe-for-corels)
       - [Alluvial plot](#alluvial-plot)
       - [Performance on training data](#performance-on-training-data)
+      - [Performance of each rule](#performance-of-each-rule)
       - [Performance on new data](#performance-on-new-data)
 
 ## What are corels and tidycorels?
@@ -225,6 +226,177 @@ ggplot2::autoplot(conf_matrix, "heatmap")
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+### Performance of each rule
+
+A data frame of the performance of each rule is also provided.
+
+``` r
+corels_mtcars$rule_performance_df %>% 
+  dplyr::mutate(rule_perc_correct = formattable::color_tile("white", "orange")(rule_perc_correct)) %>%
+  dplyr::mutate(rule_fire_count = formattable::color_tile("white", "lightblue")(rule_fire_count)) %>%
+  kableExtra::kable(escape = F,
+                   caption = "Corels Performance for each rule in order") %>%
+  kableExtra::kable_styling("hover", full_width = F)
+```
+
+<table class="table table-hover" style="width: auto !important; margin-left: auto; margin-right: auto;">
+
+<caption>
+
+Corels Performance for each rule in order
+
+</caption>
+
+<thead>
+
+<tr>
+
+<th style="text-align:left;">
+
+rule
+
+</th>
+
+<th style="text-align:left;">
+
+rule\_fire\_count
+
+</th>
+
+<th style="text-align:right;">
+
+rule\_correct
+
+</th>
+
+<th style="text-align:left;">
+
+rule\_perc\_correct
+
+</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td style="text-align:left;">
+
+gear\_X3
+
+</td>
+
+<td style="text-align:left;">
+
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #add8e6">15</span>
+
+</td>
+
+<td style="text-align:right;">
+
+15
+
+</td>
+
+<td style="text-align:left;">
+
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffa500">100</span>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+wt\_bin1
+
+</td>
+
+<td style="text-align:left;">
+
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #eef7fa">7</span>
+
+</td>
+
+<td style="text-align:right;">
+
+7
+
+</td>
+
+<td style="text-align:left;">
+
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffa500">100</span>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+vs\_X0
+
+</td>
+
+<td style="text-align:left;">
+
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffffff">5</span>
+
+</td>
+
+<td style="text-align:right;">
+
+5
+
+</td>
+
+<td style="text-align:left;">
+
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffa500">100</span>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align:left;">
+
+else
+
+</td>
+
+<td style="text-align:left;">
+
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffffff">5</span>
+
+</td>
+
+<td style="text-align:right;">
+
+4
+
+</td>
+
+<td style="text-align:left;">
+
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffffff">80</span>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
 
 ### Performance on new data
 

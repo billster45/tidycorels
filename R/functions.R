@@ -100,7 +100,7 @@ capture_corels <- function(corels_output, label_cols, value_delim) {
 }
 
 #' diagram_corels
-#' creates three data frames: one for the alluvial plot and two for a sankey diagram
+#' creates four data frames: one for the alluvial plot, one for rule performance, and two for a sankey diagram
 #' @param DT the data table of only the colums to visualise
 #' @return the data table with information not used in the rules removed and nodes and edges for a sankey diagram
 #' @keywords internal
@@ -110,10 +110,11 @@ diagram_corels <- function(DT) {
   cols <- colnames(DT)
   colcount <- length(cols) - 1
   keep_cols <- cols[2:colcount]
+  rule_count <- length(keep_cols)
   first_col <- cols[1]
   last_col <- cols[length(cols)]
 
-  # Remove information not used (i.e. a rule has fired and later rule values not used)
+  ## 1. Remove information not used (i.e. a rule has fired and later rule values not used)
   DT1 <- DT[, keep_cols, with = FALSE] # keep only columns used in Corels rules
   DT1[, ID := .I] # create ID per row
   DT1 <- data.table::melt(DT1, id.vars = "ID", variable.name = "rule", value.name = "value") # reshape wide to long
@@ -127,11 +128,28 @@ diagram_corels <- function(DT) {
   }
   DT1_wide <- data.table::dcast(DT1, ID ~ rule, value.var = "value") # rehsape from long to wide
 
-  # create a table to be returned for an alluvial plot
+  ## 2. create a dataframe to be returned for an alluvial plot
   alluvial_DT <- cbind(DT[,..first_col], DT1_wide, DT[,..last_col]) # combine the NA'd rule values back alongside the first and last columns (truth and corels label respectively)
-  alluvial_DT <- alluvial_DT[,!c("ID")]
+  alluvial_DT <- alluvial_DT[,!c("ID")] # drop id no longer needed
 
-  # SANKEY diagram table preperation
+  ## 3. Create a dataframe that shows classification success by rule fired
+  DT_t <- DT1[, rule := ifelse(value == 1, yes = as.character(rule), no = NA)] # only keep rules if fired
+  DT_t[, rule := ifelse(value == 0 & index == rule_count, yes = "else", no = rule)] # the final else rule
+  DT_t <- DT_t[!is.na(rule),]  # remove rules if not fired
+  DT_t <- DT_t[,c("rule")] # keep just the column of rules fired
+  success_DT <- cbind(DT[,..first_col], DT_t, DT[,..last_col]) # combine the rules fired with the truth outcome and corels_label
+  code <- paste0("success_DT <- success_DT[,correct := ifelse(",first_col," == corels_label, 1, 0)]") # create correct = 1 if rule is right
+  base::eval(base::parse(text = code)) # execute the code above
+  rule_performance <- success_DT[, .(rule_fire_count = .N, rule_correct = sum(correct)), by = rule] # calculate how many times each rule was right
+  rule_performance[,rule_perc_correct := (rule_correct/rule_fire_count) * 100] # calculate % right
+
+  DT_rule_order <- data.table::data.table(rule=c(keep_cols,"else")) # create table of the rules in the order they appear
+  DT_rule_order[, ID := .I] # as an ID
+
+  rule_performance <- rule_performance[DT_rule_order, on =.(rule = rule)] # join rule order table to sort performance table
+  rule_performance <- rule_performance[,!c("ID")] # drop id no longer needed
+
+  ## 4. SANKEY diagram table preperation
   DT2 <- cbind(DT1_wide, DT[,..last_col]) # combine the NA'd rule values alongside the corels label
   DT2 <- data.table::melt(DT2, id.vars = "ID",variable.name = "rule", value.name = "value") # reshape wide to long
   DT2 <- DT2[order(ID)]
@@ -139,13 +157,13 @@ diagram_corels <- function(DT) {
   DT2[, source := paste0(rule," = ",value)] # combine the rule and the value
   DT2 <- DT2[, c("ID", "source")] # keep only these two columns
 
-  # Sankey NODES
+  ## 5. Sankey NODES
   nodes <- DT2[, keyby = .(source), .(node_n = .N)] # summarise the rules as nodes
   nodes <- nodes[, !c("node_n")] # remove the node count
   nodes[, ID := .I -1] # set the node ID to start at 0 as networkD3::sankeyNetwork() require this
   data.table::setnames(nodes, old = "source", new = "label")
 
-  # Sankey EDGES
+  ## 6. Sankey EDGES
   DT2[, target := data.table::shift(source, -1), by = ID] # create a new column that is the next rule
   DT2 <- stats::na.omit(DT2) # get rid of final row that is NA in the column target
   edges <- DT2[, keyby = .(source, target), .(value = .N)] # create the count between nodes
@@ -157,11 +175,11 @@ diagram_corels <- function(DT) {
 
   return(c(list(
     alluvial_DT = alluvial_DT,
+    rule_performance = rule_performance,
     nodes = nodes,
     edges = edges
   )))
 }
-
 #' tidy_corels
 #'
 #' The tidy_corels() function converts your dataframe into the text file format corels::corels() expects and returns a list of useful R objects.
@@ -173,6 +191,8 @@ diagram_corels <- function(DT) {
 #' Returns those rules converted to data.table::fifelse() code (corels_rules_DT).
 #'
 #' Returns a dataframe of only the true label, the columns with their value if they are used by the rules (i.e. if the value is not used it will be NA), and the corels classification applied to your dataframe (alluvial_df). This dataframe is intended to be used in an easyalluvial plot \url{https://github.com/erblast/easyalluvial/blob/master/README.md}.
+#'
+#' Returns a dataframe of the peformance of each rule in the order of Corels rules (rule_performance_df).
 #'
 #' Returns two dataframes (sankey_edges_df and sankey_nodes_df) to create a sankey network diagram of the corels rules \url{https://christophergandrud.github.io/networkD3/#sankey}.
 #'
@@ -268,6 +288,7 @@ tidy_corels <- function(df, label_cols, value_delim = "_", ...) {
     corels_console_output = corels_output,
     corels_rules_DT = DT_code,
     alluvial_df = data.table::setDF(diagrams$alluvial_DT),
+    rule_performance_df = data.table::setDF(diagrams$rule_performance),
     sankey_nodes_df = data.table::setDF(diagrams$nodes),
     sankey_edges_df = data.table::setDF(diagrams$edges)
   )))
@@ -319,6 +340,7 @@ predict_corels <- function(model, new_df) {
     new_df_labelled = data.table::setDF(new_df_DT),
     corels_rules_DT = corels_code,
     alluvial_df = data.table::setDF(diagrams$alluvial_DT),
+    rule_performance_df = data.table::setDF(diagrams$rule_performance),
     sankey_nodes_df = data.table::setDF(diagrams$nodes),
     sankey_edges_df = data.table::setDF(diagrams$edges)
   )))

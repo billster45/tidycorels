@@ -84,7 +84,7 @@
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Corels vs Random Forest</h1>
             
-            <h4 class="date">2020-08-11</h4>
+            <h4 class="date">2020-08-15</h4>
       
       
       <div class="hidden name"><code>diabetes_example.Rmd</code></div>
@@ -1307,8 +1307,234 @@ f_meas
                  <span class="kw">labelfont</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">size</span> <span class="kw">=</span> <span class="fl">11</span>)
 )</pre></body></html></div>
 <div id="htmlwidget-f0b71748aeb1639bcc82" style="width:100%;height:432.632880098888px;" class="parcats html-widget"></div>
-<script type="application/json" data-for="htmlwidget-f0b71748aeb1639bcc82">{"x":{"traces":{"parcats":{"type":"parcats","dimensions":[{"label":"diabetes_X1","values":["0","0","0","0","0","0","1","1","1","1","1","1"],"categoryorder":"array","categoryarray":["1","0"]},{"label":"age_bin1","values":["0","0","0","0","0","1","0","0","0","0","0","1"],"categoryorder":"array","categoryarray":["1","0"]},{"label":"glucose_bin4","values":["0","0","0","0","1","not used","0","0","0","0","1","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"insulin_bin1","values":["0","0","0","1","not used","not used","0","0","0","1","not used","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"pedigree_bin1","values":["0","0","1","not used","not used","not used","0","0","1","not used","not used","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"triceps_bin4","values":["0","1","not used","not used","not used","not used","0","1","not used","not used","not used","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"corels_label","values":["0","1","0","0","1","0","0","1","0","0","1","0"],"categoryorder":"array","categoryarray":["1","0"]}],"counts":[16,11,9,34,10,42,10,10,6,5,32,7],"line":{"shape":"hspline","color":["lightgreen","lightgreen","lightgreen","lightgreen","lightgreen","lightgreen","#CC6666","#CC6666","#CC6666","#CC6666","#CC6666","#CC6666"]},"hoveron":"dimension","hoverinfo":"count","labelfont":{"size":11},"arrangement":"perpendicular","bundlecolors":true,"sortpaths":"forward","tickfont":null,"domain":{"y":[0,1]}}},"layout":[],"shapes":[],"shapes_original":[],"map_curve":[],"map_trace_2_shape":[],"map_type":[],"map_color":[],"parcats_cols":["lightgreen","lightgreen","lightgreen","lightgreen","lightgreen","lightgreen","#CC6666","#CC6666","#CC6666","#CC6666","#CC6666","#CC6666"],"imp":false},"evals":[],"jsHooks":[]}</script><p>Further, below we visualise the distribution of the raw values of each categorised bin used in each rule.</p>
-<div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="no">diabetes_recipe_non_dummy</span> <span class="kw">&lt;-</span>
+<script type="application/json" data-for="htmlwidget-f0b71748aeb1639bcc82">{"x":{"traces":{"parcats":{"type":"parcats","dimensions":[{"label":"diabetes_X1","values":["0","0","0","0","0","0","1","1","1","1","1","1"],"categoryorder":"array","categoryarray":["1","0"]},{"label":"age_bin1","values":["0","0","0","0","0","1","0","0","0","0","0","1"],"categoryorder":"array","categoryarray":["1","0"]},{"label":"glucose_bin4","values":["0","0","0","0","1","not used","0","0","0","0","1","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"insulin_bin1","values":["0","0","0","1","not used","not used","0","0","0","1","not used","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"pedigree_bin1","values":["0","0","1","not used","not used","not used","0","0","1","not used","not used","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"triceps_bin4","values":["0","1","not used","not used","not used","not used","0","1","not used","not used","not used","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"corels_label","values":["0","1","0","0","1","0","0","1","0","0","1","0"],"categoryorder":"array","categoryarray":["1","0"]}],"counts":[16,11,9,34,10,42,10,10,6,5,32,7],"line":{"shape":"hspline","color":["lightgreen","lightgreen","lightgreen","lightgreen","lightgreen","lightgreen","#CC6666","#CC6666","#CC6666","#CC6666","#CC6666","#CC6666"]},"hoveron":"dimension","hoverinfo":"count","labelfont":{"size":11},"arrangement":"perpendicular","bundlecolors":true,"sortpaths":"forward","tickfont":null,"domain":{"y":[0,1]}}},"layout":[],"shapes":[],"shapes_original":[],"map_curve":[],"map_trace_2_shape":[],"map_type":[],"map_color":[],"parcats_cols":["lightgreen","lightgreen","lightgreen","lightgreen","lightgreen","lightgreen","#CC6666","#CC6666","#CC6666","#CC6666","#CC6666","#CC6666"],"imp":false},"evals":[],"jsHooks":[]}</script><p>A data frame of the performance of each rule is also provided. This shows us that one of the weaker rules is <code>triceps_bin4</code>.</p>
+<div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="no">diabetes_test_predict</span>$<span class="no">rule_performance_df</span> <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">rule_perc_correct</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">round</a></span>(<span class="no">rule_perc_correct</span>,<span class="fl">1</span>)) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">rule_perc_correct</span> <span class="kw">=</span> <span class="kw pkg">formattable</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/formattable/man/color_tile.html">color_tile</a></span>(<span class="st">"white"</span>, <span class="st">"orange"</span>)(<span class="no">rule_perc_correct</span>)) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">rule_fire_count</span> <span class="kw">=</span> <span class="kw pkg">formattable</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/formattable/man/color_tile.html">color_tile</a></span>(<span class="st">"white"</span>, <span class="st">"lightblue"</span>)(<span class="no">rule_fire_count</span>)) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">kableExtra</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/reexports.html">kable</a></span>(<span class="kw">escape</span> <span class="kw">=</span> <span class="no">F</span>,
+                   <span class="kw">caption</span> <span class="kw">=</span> <span class="st">"Corels Performance for each rule in order"</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">kableExtra</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/kable_styling.html">kable_styling</a></span>(<span class="st">"hover"</span>, <span class="kw">full_width</span> <span class="kw">=</span> <span class="no">F</span>)</pre></body></html></div>
+<table class="table table table-hover">
+<caption>
+Corels Performance for each rule in order
+</caption>
+<thead><tr>
+<th style="text-align:left;">
+rule
+</th>
+<th style="text-align:left;">
+rule_fire_count
+</th>
+<th style="text-align:right;">
+rule_correct
+</th>
+<th style="text-align:left;">
+rule_perc_correct
+</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+age_bin1
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #add8e6">49</span>
+</td>
+<td style="text-align:right;">
+42
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffa809">85.7</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+glucose_bin4
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #bde0eb">42</span>
+</td>
+<td style="text-align:right;">
+32
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffbe46">76.2</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+insulin_bin1
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #c5e3ed">39</span>
+</td>
+<td style="text-align:right;">
+34
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffa500">87.2</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+pedigree_bin1
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffffff">15</span>
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffe2af">60.0</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+triceps_bin4
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #f0f8fa">21</span>
+</td>
+<td style="text-align:right;">
+10
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffffff">47.6</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+else
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #e4f2f6">26</span>
+</td>
+<td style="text-align:right;">
+16
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffdfa5">61.5</span>
+</td>
+</tr>
+</tbody>
+</table>
+<p>If we examine rule success on the training data the weaker <code>triceps_bin4</code> does perform well in the training data. However, we usually cannot use test data to improve a classifier without risking overfitting (though one option would be to use all of the data to build Corels rules with cross validation).</p>
+<div class="sourceCode" id="cb14"><html><body><pre class="r"><span class="no">diabetes_train_model</span>$<span class="no">rule_performance_df</span> <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">rule_perc_correct</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">round</a></span>(<span class="no">rule_perc_correct</span>,<span class="fl">1</span>)) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">rule_perc_correct</span> <span class="kw">=</span> <span class="kw pkg">formattable</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/formattable/man/color_tile.html">color_tile</a></span>(<span class="st">"white"</span>, <span class="st">"orange"</span>)(<span class="no">rule_perc_correct</span>)) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">rule_fire_count</span> <span class="kw">=</span> <span class="kw pkg">formattable</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/formattable/man/color_tile.html">color_tile</a></span>(<span class="st">"white"</span>, <span class="st">"lightblue"</span>)(<span class="no">rule_fire_count</span>)) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">kableExtra</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/reexports.html">kable</a></span>(<span class="kw">escape</span> <span class="kw">=</span> <span class="no">F</span>,
+                   <span class="kw">caption</span> <span class="kw">=</span> <span class="st">"Corels Performance for each rule in order"</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">kableExtra</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/kable_styling.html">kable_styling</a></span>(<span class="st">"hover"</span>, <span class="kw">full_width</span> <span class="kw">=</span> <span class="no">F</span>)</pre></body></html></div>
+<table class="table table table-hover">
+<caption>
+Corels Performance for each rule in order
+</caption>
+<thead><tr>
+<th style="text-align:left;">
+rule
+</th>
+<th style="text-align:left;">
+rule_fire_count
+</th>
+<th style="text-align:right;">
+rule_correct
+</th>
+<th style="text-align:left;">
+rule_perc_correct
+</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+age_bin1
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #add8e6">170</span>
+</td>
+<td style="text-align:right;">
+146
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffb632">85.9</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+glucose_bin4
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #cae6ef">122</span>
+</td>
+<td style="text-align:right;">
+88
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #fff1d9">72.1</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+insulin_bin1
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #eaf5f8">71</span>
+</td>
+<td style="text-align:right;">
+64
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffa500">90.1</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+pedigree_bin1
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #f0f7fa">62</span>
+</td>
+<td style="text-align:right;">
+47
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffe1ac">75.8</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+triceps_bin4
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffffff">38</span>
+</td>
+<td style="text-align:right;">
+29
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffdfa6">76.3</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+else
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #d0e8f0">113</span>
+</td>
+<td style="text-align:right;">
+78
+</td>
+<td style="text-align:left;">
+<span style="display: block; padding: 0 4px; border-radius: 4px; background-color: #ffffff">69.0</span>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Further, below we visualise the distribution of the raw values of each categorised bin used in each rule.</p>
+<div class="sourceCode" id="cb15"><html><body><pre class="r"><span class="no">diabetes_recipe_non_dummy</span> <span class="kw">&lt;-</span>
   <span class="kw pkg">recipes</span><span class="kw ns">::</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/recipe.html">recipe</a></span>(<span class="no">diabetes</span> ~ <span class="no">pregnant</span> + <span class="no">glucose</span> + <span class="no">pressure</span> + <span class="no">triceps</span> + <span class="no">insulin</span> + <span class="no">mass</span> + <span class="no">pedigree</span> + <span class="no">age</span>,
                   <span class="kw">data</span> <span class="kw">=</span> <span class="no">diabetes_clean</span>) <span class="kw">%&gt;%</span>
   <span class="kw pkg">recipes</span><span class="kw ns">::</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/step_normalize.html">step_normalize</a></span>(<span class="fu">all_numeric</span>()) <span class="kw">%&gt;%</span>
@@ -1348,7 +1574,7 @@ f_meas
 <span class="no">p4</span> <span class="kw">&lt;-</span> <span class="fu">plot_fun</span>(<span class="kw">X</span> <span class="kw">=</span> <span class="no">PEDIGREE</span>, <span class="kw">Y</span> <span class="kw">=</span> <span class="no">pedigree</span>, <span class="kw">bin</span> <span class="kw">=</span> <span class="no">bin1</span>)
 <span class="no">p5</span> <span class="kw">&lt;-</span> <span class="fu">plot_fun</span>(<span class="kw">X</span> <span class="kw">=</span> <span class="no">TRICEPS</span>, <span class="kw">Y</span> <span class="kw">=</span> <span class="no">triceps</span>, <span class="kw">bin</span> <span class="kw">=</span> <span class="no">bin4</span>)
 <span class="kw pkg">cowplot</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/cowplot/man/plot_grid.html">plot_grid</a></span>(<span class="no">p1</span>, <span class="no">p2</span>, <span class="no">p3</span>, <span class="no">p4</span>, <span class="no">p5</span>)</pre></body></html></div>
-<p><img src="diabetes_example_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
+<p><img src="diabetes_example_files/figure-html/unnamed-chunk-14-1.png" width="700"></p>
 <p>The plots from left to right highlight which bin is used in each Corels rule in the sequential order of the rules. The plot is created by combining the <a href="https://recipes.tidymodels.org/reference/step_discretize.html">discretised</a> and one-hot encoded data with the raw column values.</p>
 </div>
   </div>
@@ -1364,7 +1590,7 @@ f_meas
 
 
       <footer><div class="copyright">
-  <p>Developed by The package maintainer.</p>
+  <p>Developed by Bill Cockerill.</p>
 </div>
 
 <div class="pkgdown">

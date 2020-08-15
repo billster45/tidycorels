@@ -349,6 +349,33 @@ parcats::parcats(p = p,
 )
 ```
 
+
+A data frame of the performance of each rule is also provided. This shows us that one of the weaker rules is `creditHistory_no.credits.all.paid`.
+
+```{r}
+credit_test_predict$rule_performance_df %>% 
+  dplyr::mutate(rule_perc_correct = round(rule_perc_correct,1)) %>% 
+  dplyr::mutate(rule_perc_correct = formattable::color_tile("white", "orange")(rule_perc_correct)) %>%
+  dplyr::mutate(rule_fire_count = formattable::color_tile("white", "lightblue")(rule_fire_count)) %>%
+  kableExtra::kable(escape = F,
+                   caption = "Corels Performance for each rule in order") %>%
+  kableExtra::kable_styling("hover", full_width = F)
+```
+
+If we examine rule success on the training data the weaker `creditHistory_no.credits.all.paid` does perform better in the training data. However, we usually cannot use test data to improve a classifier without risking overfitting (though one option would be to use all of the data to build Corels rules with cross validation).
+
+```{r}
+credit_train_model$rule_performance_df %>% 
+  dplyr::mutate(rule_perc_correct = round(rule_perc_correct,1)) %>% 
+  dplyr::mutate(rule_perc_correct = formattable::color_tile("white", "orange")(rule_perc_correct)) %>%
+  dplyr::mutate(rule_fire_count = formattable::color_tile("white", "lightblue")(rule_fire_count)) %>%
+  kableExtra::kable(escape = F,
+                   caption = "Corels Performance for each rule in order") %>%
+  kableExtra::kable_styling("hover", full_width = F)
+
+```
+
+
 # XGBboost
 
 Next we try XGBoost that is a Gradient Boosting Method:
