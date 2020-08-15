@@ -1,1 +1,0 @@
-{age:bin1}~0;{glucose:bin4}~1;{insulin:bin1}~0;{pedigree:bin1}~0;{triceps:bin4}~1;default~0
