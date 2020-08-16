@@ -79,12 +79,13 @@
 
       
 
-      </header><script src="german_credit_data_example_files/htmlwidgets-1.5.1/htmlwidgets.js"></script><script src="german_credit_data_example_files/d3-4.5.0/d3.min.js"></script><script src="german_credit_data_example_files/sankey-1/sankey.js"></script><script src="german_credit_data_example_files/sankeyNetwork-binding-0.4/sankeyNetwork.js"></script><script src="german_credit_data_example_files/plotly.js-1.47.4/./plotly.min.js"></script><script src="german_credit_data_example_files/parcats-binding-0.0.1/parcats.js"></script><script src="german_credit_data_example_files/kePrint-0.0.1/kePrint.js"></script><div class="row">
+      </header><script src="german_credit_data_example_files/htmlwidgets-1.5.1/htmlwidgets.js"></script><script src="german_credit_data_example_files/d3-4.5.0/d3.min.js"></script><script src="german_credit_data_example_files/sankey-1/sankey.js"></script><script src="german_credit_data_example_files/sankeyNetwork-binding-0.4/sankeyNetwork.js"></script><link href="german_credit_data_example_files/vis-4.20.1/vis.css" rel="stylesheet">
+<script src="german_credit_data_example_files/vis-4.20.1/vis.min.js"></script><script src="german_credit_data_example_files/visNetwork-binding-2.0.9/visNetwork.js"></script><script src="german_credit_data_example_files/plotly.js-1.47.4/./plotly.min.js"></script><script src="german_credit_data_example_files/parcats-binding-0.0.1/parcats.js"></script><script src="german_credit_data_example_files/kePrint-0.0.1/kePrint.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Corels vs XGBoost</h1>
             
-            <h4 class="date">2020-08-15</h4>
+            <h4 class="date">2020-08-16</h4>
       
       
       <div class="hidden name"><code>german_credit_data_example.Rmd</code></div>
@@ -125,6 +126,7 @@
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">parcats</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">networkD3</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">formattable</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">visNetwork</span>)
 
 <span class="no">clean_df</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span>(<span class="kw">file</span> <span class="kw">=</span> <span class="st">"https://www.openml.org/data/get_csv/31/dataset_31_credit-g.arff"</span>,
                        <span class="kw">header</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
@@ -350,11 +352,13 @@
       <span class="kw">curiosity_policy</span> <span class="kw">=</span> <span class="fl">3</span>
     )</pre></body></html></div>
 <p>Here are the Corels rules for predicting a good loan.</p>
-<div class="sourceCode" id="cb27"><html><body><pre class="r"><span class="no">credit_train_model</span>$<span class="no">corels_console_output</span>[<span class="fl">3</span>:<span class="fl">6</span>]
+<div class="sourceCode" id="cb27"><html><body><pre class="r"><span class="no">credit_train_model</span>$<span class="no">corels_console_output</span>[<span class="fl">2</span>:<span class="fl">7</span>]
 <span class="co">#&gt; [1] ""                                                                          </span>
-<span class="co">#&gt; [2] "OPTIMAL RULE LIST"                                                         </span>
-<span class="co">#&gt; [3] "if ({creditHistory:no.credits.all.paid}) then ({class:X0})"                </span>
-<span class="co">#&gt; [4] "else if ({creditHistory:critical.other.existing.credit}) then ({class:X1})"</span></pre></body></html></div>
+<span class="co">#&gt; [2] ""                                                                          </span>
+<span class="co">#&gt; [3] "OPTIMAL RULE LIST"                                                         </span>
+<span class="co">#&gt; [4] "if ({creditHistory:no.credits.all.paid}) then ({class:X0})"                </span>
+<span class="co">#&gt; [5] "else if ({creditHistory:critical.other.existing.credit}) then ({class:X1})"</span>
+<span class="co">#&gt; [6] "else if ({checkingStatus:X.0}) then ({class:X0})"</span></pre></body></html></div>
 <p>And we can view the Corels rules as a <a href="https://christophergandrud.github.io/networkD3/#sankey">D3 network sankey diagram</a> when applied to the training data.</p>
 <div class="sourceCode" id="cb28"><html><body><pre class="r"><span class="kw pkg">networkD3</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/networkD3/man/sankeyNetwork.html">sankeyNetwork</a></span>(<span class="co"># edges</span>
                          <span class="kw">Links</span> <span class="kw">=</span> <span class="no">credit_train_model</span>$<span class="no">sankey_edges_df</span>,
@@ -370,8 +374,39 @@
                          <span class="kw">sinksRight</span> <span class="kw">=</span> <span class="fl">TRUE</span>
                          )</pre></body></html></div>
 <div id="htmlwidget-d5331d79345f93bed309" style="width:100%;height:432.632880098888px;" class="sankeyNetwork html-widget"></div>
-<script type="application/json" data-for="htmlwidget-d5331d79345f93bed309">{"x":{"links":{"source":[0,1,4,4,5,6,6,7],"target":[3,2,0,1,3,4,5,2],"value":[371,157,371,157,244,528,244,29]},"nodes":{"name":["checkingStatus_X.0 = 0","checkingStatus_X.0 = 1","corels_label = 0","corels_label = 1","creditHistory_critical.other.existing.credit = 0","creditHistory_critical.other.existing.credit = 1","creditHistory_no.credits.all.paid = 0","creditHistory_no.credits.all.paid = 1"],"group":["checkingStatus_X.0 = 0","checkingStatus_X.0 = 1","corels_label = 0","corels_label = 1","creditHistory_critical.other.existing.credit = 0","creditHistory_critical.other.existing.credit = 1","creditHistory_no.credits.all.paid = 0","creditHistory_no.credits.all.paid = 1"]},"options":{"NodeID":"label","NodeGroup":"label","LinkGroup":null,"colourScale":"d3.scaleOrdinal(d3.schemeCategory20);","fontSize":12,"fontFamily":null,"nodeWidth":40,"nodePadding":10,"units":"","margin":{"top":null,"right":null,"bottom":null,"left":null},"iterations":32,"sinksRight":true}},"evals":[],"jsHooks":[]}</script><p>A dataframe of just the true label, the columns used in the Corels rules, and the Corels predictions is returned. The columns have been ordered for you to work well in an <a href="https://github.com/erblast/easyalluvial/blob/master/README.md">alluvial</a> plot.</p>
-<div class="sourceCode" id="cb29"><html><body><pre class="r"><span class="no">p</span> <span class="kw">&lt;-</span> <span class="kw pkg">easyalluvial</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/easyalluvial/man/alluvial_wide.html">alluvial_wide</a></span>(<span class="no">credit_train_model</span>$<span class="no">alluvial_df</span>,
+<script type="application/json" data-for="htmlwidget-d5331d79345f93bed309">{"x":{"links":{"source":[0,1,4,4,5,6,6,7],"target":[3,2,0,1,3,4,5,2],"value":[371,157,371,157,244,528,244,29]},"nodes":{"name":["checkingStatus_X.0 = 0","checkingStatus_X.0 = 1","corels_label = 0","corels_label = 1","creditHistory_critical.other.existing.credit = 0","creditHistory_critical.other.existing.credit = 1","creditHistory_no.credits.all.paid = 0","creditHistory_no.credits.all.paid = 1"],"group":["checkingStatus_X.0 = 0","checkingStatus_X.0 = 1","corels_label = 0","corels_label = 1","creditHistory_critical.other.existing.credit = 0","creditHistory_critical.other.existing.credit = 1","creditHistory_no.credits.all.paid = 0","creditHistory_no.credits.all.paid = 1"]},"options":{"NodeID":"label","NodeGroup":"label","LinkGroup":null,"colourScale":"d3.scaleOrdinal(d3.schemeCategory20);","fontSize":12,"fontFamily":null,"nodeWidth":40,"nodePadding":10,"units":"","margin":{"top":null,"right":null,"bottom":null,"left":null},"iterations":32,"sinksRight":true}},"evals":[],"jsHooks":[]}</script><p>And with some manipualation of the nodes and edges data, the rules can be viewed as a <a href="https://datastorm-open.github.io/visNetwork/layout.html">visNetwork</a> visualisation.</p>
+<div class="sourceCode" id="cb29"><html><body><pre class="r"><span class="no">rule_count</span> <span class="kw">&lt;-</span> <span class="kw pkg">base</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span>(<span class="no">credit_train_model</span>$<span class="no">rule_performance_df</span>)
+<span class="co"># extract the rule order (or levels)</span>
+<span class="no">level</span> <span class="kw">&lt;-</span> <span class="no">credit_train_model</span>$<span class="no">rule_performance_df</span> <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">level</span> <span class="kw">=</span> <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/ranking.html">row_number</a></span>()) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html">rename</a></span>(<span class="kw">level_label</span> <span class="kw">=</span> <span class="no">rule</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="no">level_label</span>,<span class="no">level</span>)
+
+<span class="co"># rename the edges</span>
+<span class="no">edges</span> <span class="kw">&lt;-</span> <span class="no">credit_train_model</span>$<span class="no">sankey_edges_df</span> <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html">rename</a></span>(<span class="kw">from</span> <span class="kw">=</span> <span class="no">source</span>, <span class="kw">to</span> <span class="kw">=</span> <span class="no">target</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">title</span> <span class="kw">=</span> <span class="no">value</span>)
+
+<span class="co"># add the levels</span>
+<span class="no">nodes</span> <span class="kw">&lt;-</span> <span class="no">credit_train_model</span>$<span class="no">sankey_nodes_df</span> <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html">rename</a></span>(<span class="kw">id</span> <span class="kw">=</span> <span class="no">ID</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">level_label</span> <span class="kw">=</span> <span class="kw pkg">stringi</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/stringi/man/stri_trim.html">stri_trim_both</a></span>(<span class="kw pkg">stringi</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/stringi/man/stri_sub.html">stri_sub</a></span>(<span class="no">label</span>,<span class="fl">1</span>,-<span class="fl">4</span>))) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html">left_join</a></span>(<span class="no">level</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">level</span> <span class="kw">=</span> <span class="fu">case_when</span>(<span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span>(<span class="no">level</span>) ~ <span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span>(<span class="no">rule_count</span>),<span class="fl">TRUE</span> ~<span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span>(<span class="no">level</span>))) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html">rename</a></span>(<span class="kw">title</span> <span class="kw">=</span> <span class="no">level_label</span>)
+
+<span class="kw pkg">visNetwork</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/visNetwork/man/visNetwork.html">visNetwork</a></span>(<span class="no">nodes</span>, <span class="no">edges</span>, <span class="kw">width</span> <span class="kw">=</span> <span class="st">"100%"</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">visNetwork</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/visNetwork/man/visNodes.html">visNodes</a></span>(<span class="kw">size</span> <span class="kw">=</span> <span class="fl">12</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">visNetwork</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/visNetwork/man/visEdges.html">visEdges</a></span>(<span class="kw">arrows</span> <span class="kw">=</span> <span class="st">"to"</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">visNetwork</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/visNetwork/man/visHierarchicalLayout.html">visHierarchicalLayout</a></span>(<span class="kw">direction</span> <span class="kw">=</span> <span class="st">"UD"</span>,
+                                    <span class="kw">levelSeparation</span> <span class="kw">=</span> <span class="fl">80</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">visNetwork</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/visNetwork/man/visInteraction.html">visInteraction</a></span>(<span class="kw">navigationButtons</span> <span class="kw">=</span> <span class="fl">TRUE</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">visNetwork</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/visNetwork/man/visOptions.html">visOptions</a></span>(<span class="kw">highlightNearest</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">enabled</span> <span class="kw">=</span> <span class="no">T</span>, <span class="kw">hover</span> <span class="kw">=</span> <span class="no">T</span>),
+                         <span class="kw">nodesIdSelection</span> <span class="kw">=</span> <span class="no">T</span>,
+                         <span class="kw">collapse</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></body></html></div>
+<div id="htmlwidget-aa8a9ac4213e919e0af2" style="width:100%;height:432.632880098888px;" class="visNetwork html-widget"></div>
+<script type="application/json" data-for="htmlwidget-aa8a9ac4213e919e0af2">{"x":{"nodes":{"label":["checkingStatus_X.0 = 0","checkingStatus_X.0 = 1","corels_label = 0","corels_label = 1","creditHistory_critical.other.existing.credit = 0","creditHistory_critical.other.existing.credit = 1","creditHistory_no.credits.all.paid = 0","creditHistory_no.credits.all.paid = 1"],"id":[0,1,2,3,4,5,6,7],"title":["checkingStatus_X.0","checkingStatus_X.0","corels_label","corels_label","creditHistory_critical.other.existing.credit","creditHistory_critical.other.existing.credit","creditHistory_no.credits.all.paid","creditHistory_no.credits.all.paid"],"level":[3,3,4,4,2,2,1,1]},"edges":{"from":[0,1,4,4,5,6,6,7],"to":[3,2,0,1,3,4,5,2],"value":[371,157,371,157,244,528,244,29],"title":[371,157,371,157,244,528,244,29]},"nodesToDataframe":true,"edgesToDataframe":true,"options":{"width":"100%","height":"100%","nodes":{"shape":"dot","size":12},"manipulation":{"enabled":false},"edges":{"arrows":"to"},"layout":{"hierarchical":{"enabled":true,"levelSeparation":80,"direction":"UD"}},"interaction":{"navigationButtons":true,"hover":true}},"groups":null,"width":"100%","height":null,"idselection":{"enabled":true,"style":"width: 150px; height: 26px","useLabels":true,"main":"Select by id"},"byselection":{"enabled":false,"style":"width: 150px; height: 26px","multiple":false,"hideColor":"rgba(200,200,200,0.5)","highlight":false},"main":null,"submain":null,"footer":null,"background":"rgba(0, 0, 0, 0)","tooltipStay":300,"tooltipStyle":"position: fixed;visibility:hidden;padding: 5px;white-space: nowrap;font-family: verdana;font-size:14px;font-color:#000000;background-color: #f5f4ed;-moz-border-radius: 3px;-webkit-border-radius: 3px;border-radius: 3px;border: 1px solid #808074;box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);","highlight":{"enabled":true,"hoverNearest":true,"degree":1,"algorithm":"all","hideColor":"rgba(200,200,200,0.5)","labelOnly":true},"collapse":{"enabled":true,"fit":false,"resetHighlight":true,"clusterOptions":null,"keepCoord":true,"labelSuffix":"(cluster)"}},"evals":[],"jsHooks":[]}</script><p>A dataframe of just the true label, the columns used in the Corels rules, and the Corels predictions is returned. The columns have been ordered for you to work well in an <a href="https://github.com/erblast/easyalluvial/blob/master/README.md">alluvial</a> plot.</p>
+<div class="sourceCode" id="cb30"><html><body><pre class="r"><span class="no">p</span> <span class="kw">&lt;-</span> <span class="kw pkg">easyalluvial</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/easyalluvial/man/alluvial_wide.html">alluvial_wide</a></span>(<span class="no">credit_train_model</span>$<span class="no">alluvial_df</span>,
                                    <span class="kw">NA_label</span> <span class="kw">=</span> <span class="st">"not used"</span>,
                            <span class="kw">col_vector_flow</span> <span class="kw">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"#CC6666"</span>,<span class="st">"lightgreen"</span>),
                            <span class="kw">auto_rotate_xlabs</span> <span class="kw">=</span> <span class="fl">FALSE</span>) +
@@ -380,29 +415,29 @@
     <span class="kw">subtitle</span> <span class="kw">=</span> <span class="st">" From truth (target_X1) to Corels classification (corels_label)"</span>
   ) + <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_discrete.html">scale_x_discrete</a></span>(<span class="kw">guide</span> <span class="kw">=</span> <span class="fu">guide_axis</span>(<span class="kw">n.dodge</span><span class="kw">=</span><span class="fl">2</span>))
 <span class="no">p</span></pre></body></html></div>
-<p><img src="german_credit_data_example_files/figure-html/unnamed-chunk-10-1.png" width="960"></p>
+<p><img src="german_credit_data_example_files/figure-html/unnamed-chunk-11-1.png" width="960"></p>
 <p>We can also create an <a href="https://erblast.github.io/easyalluvial/articles/parcats.html">interactive</a> version of the alluvial plot.</p>
-<div class="sourceCode" id="cb30"><html><body><pre class="r"><span class="kw pkg">parcats</span><span class="kw ns">::</span><span class="fu"><a href="https://erblast.github.io/parcats//reference/parcats.html">parcats</a></span>(<span class="kw">p</span> <span class="kw">=</span> <span class="no">p</span>,
+<div class="sourceCode" id="cb31"><html><body><pre class="r"><span class="kw pkg">parcats</span><span class="kw ns">::</span><span class="fu"><a href="https://erblast.github.io/parcats//reference/parcats.html">parcats</a></span>(<span class="kw">p</span> <span class="kw">=</span> <span class="no">p</span>,
                  <span class="kw">data_input</span> <span class="kw">=</span> <span class="no">credit_train_model</span>$<span class="no">alluvial_df</span>,
                  <span class="kw">marginal_histograms</span> <span class="kw">=</span> <span class="fl">FALSE</span>,
                  <span class="kw">hoveron</span> <span class="kw">=</span> <span class="st">'dimension'</span>,
                  <span class="kw">hoverinfo</span> <span class="kw">=</span> <span class="st">'count'</span>,
                  <span class="kw">labelfont</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">size</span> <span class="kw">=</span> <span class="fl">11</span>)
 )</pre></body></html></div>
-<div id="htmlwidget-aa8a9ac4213e919e0af2" style="width:100%;height:432.632880098888px;" class="parcats html-widget"></div>
-<script type="application/json" data-for="htmlwidget-aa8a9ac4213e919e0af2">{"x":{"traces":{"parcats":{"type":"parcats","dimensions":[{"label":"class_X1","values":["0","0","0","0","1","1","1","1"],"categoryorder":"array","categoryarray":["1","0"]},{"label":"creditHistory_no.credits.all.paid","values":["0","0","0","1","0","0","0","1"],"categoryorder":"array","categoryarray":["1","0"]},{"label":"creditHistory_critical.other.existing.credit","values":["0","0","1","not used","0","0","1","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"checkingStatus_X.0","values":["0","1","not used","not used","0","1","not used","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"corels_label","values":["1","0","1","0","1","0","1","0"],"categoryorder":"array","categoryarray":["1","0"]}],"counts":[90,89,44,20,281,68,200,9],"line":{"shape":"hspline","color":["#CC6666","#CC6666","#CC6666","#CC6666","lightgreen","lightgreen","lightgreen","lightgreen"]},"hoveron":"dimension","hoverinfo":"count","labelfont":{"size":11},"arrangement":"perpendicular","bundlecolors":true,"sortpaths":"forward","tickfont":null,"domain":{"y":[0,1]}}},"layout":[],"shapes":[],"shapes_original":[],"map_curve":[],"map_trace_2_shape":[],"map_type":[],"map_color":[],"parcats_cols":["#CC6666","#CC6666","#CC6666","#CC6666","lightgreen","lightgreen","lightgreen","lightgreen"],"imp":false},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-71eca6b5d31757a7c7f9" style="width:100%;height:432.632880098888px;" class="parcats html-widget"></div>
+<script type="application/json" data-for="htmlwidget-71eca6b5d31757a7c7f9">{"x":{"traces":{"parcats":{"type":"parcats","dimensions":[{"label":"class_X1","values":["0","0","0","0","1","1","1","1"],"categoryorder":"array","categoryarray":["1","0"]},{"label":"creditHistory_no.credits.all.paid","values":["0","0","0","1","0","0","0","1"],"categoryorder":"array","categoryarray":["1","0"]},{"label":"creditHistory_critical.other.existing.credit","values":["0","0","1","not used","0","0","1","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"checkingStatus_X.0","values":["0","1","not used","not used","0","1","not used","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"corels_label","values":["1","0","1","0","1","0","1","0"],"categoryorder":"array","categoryarray":["1","0"]}],"counts":[90,89,44,20,281,68,200,9],"line":{"shape":"hspline","color":["#CC6666","#CC6666","#CC6666","#CC6666","lightgreen","lightgreen","lightgreen","lightgreen"]},"hoveron":"dimension","hoverinfo":"count","labelfont":{"size":11},"arrangement":"perpendicular","bundlecolors":true,"sortpaths":"forward","tickfont":null,"domain":{"y":[0,1]}}},"layout":[],"shapes":[],"shapes_original":[],"map_curve":[],"map_trace_2_shape":[],"map_type":[],"map_color":[],"parcats_cols":["#CC6666","#CC6666","#CC6666","#CC6666","lightgreen","lightgreen","lightgreen","lightgreen"],"imp":false},"evals":[],"jsHooks":[]}</script>
 </div>
 <div id="corels-performance-on-test" class="section level2">
 <h2 class="hasAnchor">
 <a href="#corels-performance-on-test" class="anchor"></a>Corels performance on test</h2>
 <p>Next we use the function <code>tidycorels::corels_predict()</code> to apply the Corels rules created on the training data to the test data that has already been pre-processed using the recipe created on the training data.</p>
-<div class="sourceCode" id="cb31"><html><body><pre class="r"><span class="no">credit_test_predict</span> <span class="kw">&lt;-</span>
+<div class="sourceCode" id="cb32"><html><body><pre class="r"><span class="no">credit_test_predict</span> <span class="kw">&lt;-</span>
   <span class="kw pkg">tidycorels</span><span class="kw ns">::</span><span class="fu"><a href="../reference/predict_corels.html">predict_corels</a></span>(
     <span class="kw">model</span> <span class="kw">=</span> <span class="no">credit_train_model</span>,
     <span class="kw">new_df</span> <span class="kw">=</span> <span class="no">credit_test_preprocessed</span>
   )</pre></body></html></div>
 <p>We can now use the test data that has been labelled using the Corels rules and compare this to the true label to create a confusion matrix along with performance statistics.</p>
-<div class="sourceCode" id="cb32"><html><body><pre class="r"><span class="no">conf_matrix</span> <span class="kw">&lt;-</span>
+<div class="sourceCode" id="cb33"><html><body><pre class="r"><span class="no">conf_matrix</span> <span class="kw">&lt;-</span>
   <span class="no">credit_test_predict</span>$<span class="no">new_df_labelled</span> <span class="kw">%&gt;%</span>
   <span class="kw pkg">yardstick</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/yardstick/man/conf_mat.html">conf_mat</a></span>(
     <span class="kw">truth</span> <span class="kw">=</span> <span class="st">"class_X1"</span>,
@@ -410,8 +445,8 @@
   )
 
 <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span>(<span class="no">conf_matrix</span>, <span class="st">"heatmap"</span>)</pre></body></html></div>
-<p><img src="german_credit_data_example_files/figure-html/unnamed-chunk-13-1.png" width="700"></p>
-<div class="sourceCode" id="cb33"><html><body><pre class="r">
+<p><img src="german_credit_data_example_files/figure-html/unnamed-chunk-14-1.png" width="700"></p>
+<div class="sourceCode" id="cb34"><html><body><pre class="r">
 <span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>(<span class="no">conf_matrix</span>,
         <span class="kw">event_level</span> <span class="kw">=</span> <span class="st">"second"</span>) <span class="kw">%&gt;%</span>
   <span class="kw pkg">dplyr</span><span class="kw ns">:::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">.estimate</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">round</a></span>(<span class="no">.estimate</span>, <span class="kw">digits</span> <span class="kw">=</span> <span class="fl">3</span>)) <span class="kw">%&gt;%</span>
@@ -478,7 +513,7 @@ f_meas
 </table>
 <p>Because, <em>“It is worse to class a customer as good when they are bad (5), than it is to class a customer as bad when they are good (1).”</em> (<a href="https://archive.ics.uci.edu/ml/datasets/Statlog+(German+Credit+Data)">see</a>), precision is a useful metric. It measures the proportion of True Positives (117 labelled good loans that were actually good), out of the True Positives plus False Positives (34 labelled good loans that were actually bad). This is the bottom row of the confusion matrix: 117 / (117 + 34) = 0.775.</p>
 <p>By inspecting the alluvial plot on test data we can easily see where and why the rules have succeeded or failed to label the unseen test data correctly.</p>
-<div class="sourceCode" id="cb34"><html><body><pre class="r"><span class="no">p</span> <span class="kw">&lt;-</span> <span class="no">credit_test_predict</span>$<span class="no">alluvial_df</span> <span class="kw">%&gt;%</span>
+<div class="sourceCode" id="cb35"><html><body><pre class="r"><span class="no">p</span> <span class="kw">&lt;-</span> <span class="no">credit_test_predict</span>$<span class="no">alluvial_df</span> <span class="kw">%&gt;%</span>
   <span class="kw pkg">easyalluvial</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/easyalluvial/man/alluvial_wide.html">alluvial_wide</a></span>(<span class="kw">stratum_width</span> <span class="kw">=</span> <span class="fl">0.2</span>,
                               <span class="kw">NA_label</span> <span class="kw">=</span> <span class="st">"not used"</span>,
                            <span class="kw">col_vector_flow</span> <span class="kw">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"#CC6666"</span>,<span class="st">"lightgreen"</span>)) +
@@ -488,18 +523,18 @@ f_meas
     <span class="kw">subtitle</span> <span class="kw">=</span> <span class="st">" From truth (far left column) to Corels classification (far right column)"</span>
   ) + <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_discrete.html">scale_x_discrete</a></span>(<span class="kw">guide</span> <span class="kw">=</span> <span class="fu">guide_axis</span>(<span class="kw">n.dodge</span><span class="kw">=</span><span class="fl">2</span>))
 <span class="no">p</span></pre></body></html></div>
-<p><img src="german_credit_data_example_files/figure-html/unnamed-chunk-14-1.png" width="960"></p>
+<p><img src="german_credit_data_example_files/figure-html/unnamed-chunk-15-1.png" width="960"></p>
 <p>We can also create an <a href="https://erblast.github.io/easyalluvial/articles/parcats.html">interactive</a> version of the alluvial plot.</p>
-<div class="sourceCode" id="cb35"><html><body><pre class="r"><span class="kw pkg">parcats</span><span class="kw ns">::</span><span class="fu"><a href="https://erblast.github.io/parcats//reference/parcats.html">parcats</a></span>(<span class="kw">p</span> <span class="kw">=</span> <span class="no">p</span>,
+<div class="sourceCode" id="cb36"><html><body><pre class="r"><span class="kw pkg">parcats</span><span class="kw ns">::</span><span class="fu"><a href="https://erblast.github.io/parcats//reference/parcats.html">parcats</a></span>(<span class="kw">p</span> <span class="kw">=</span> <span class="no">p</span>,
                  <span class="kw">data_input</span> <span class="kw">=</span> <span class="no">credit_test_predict</span>$<span class="no">alluvial_df</span>,
                  <span class="kw">marginal_histograms</span> <span class="kw">=</span> <span class="fl">FALSE</span>,
                  <span class="kw">hoveron</span> <span class="kw">=</span> <span class="st">'dimension'</span>,
                  <span class="kw">hoverinfo</span> <span class="kw">=</span> <span class="st">'count'</span>,
                  <span class="kw">labelfont</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">size</span> <span class="kw">=</span> <span class="fl">11</span>)
 )</pre></body></html></div>
-<div id="htmlwidget-71eca6b5d31757a7c7f9" style="width:100%;height:432.632880098888px;" class="parcats html-widget"></div>
-<script type="application/json" data-for="htmlwidget-71eca6b5d31757a7c7f9">{"x":{"traces":{"parcats":{"type":"parcats","dimensions":[{"label":"class_X1","values":["0","0","0","0","1","1","1","1"],"categoryorder":"array","categoryarray":["1","0"]},{"label":"creditHistory_no.credits.all.paid","values":["0","0","0","1","0","0","0","1"],"categoryorder":"array","categoryarray":["1","0"]},{"label":"creditHistory_critical.other.existing.credit","values":["0","0","1","not used","0","0","1","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"checkingStatus_X.0","values":["0","1","not used","not used","0","1","not used","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"corels_label","values":["1","0","1","0","1","0","1","0"],"categoryorder":"array","categoryarray":["1","0"]}],"counts":[28,18,6,5,74,19,43,6],"line":{"shape":"hspline","color":["#CC6666","#CC6666","#CC6666","#CC6666","lightgreen","lightgreen","lightgreen","lightgreen"]},"hoveron":"dimension","hoverinfo":"count","labelfont":{"size":11},"arrangement":"perpendicular","bundlecolors":true,"sortpaths":"forward","tickfont":null,"domain":{"y":[0,1]}}},"layout":[],"shapes":[],"shapes_original":[],"map_curve":[],"map_trace_2_shape":[],"map_type":[],"map_color":[],"parcats_cols":["#CC6666","#CC6666","#CC6666","#CC6666","lightgreen","lightgreen","lightgreen","lightgreen"],"imp":false},"evals":[],"jsHooks":[]}</script><p>A data frame of the performance of each rule is also provided. This shows us that one of the weaker rules is <code>creditHistory_no.credits.all.paid</code>.</p>
-<div class="sourceCode" id="cb36"><html><body><pre class="r"><span class="no">credit_test_predict</span>$<span class="no">rule_performance_df</span> <span class="kw">%&gt;%</span>
+<div id="htmlwidget-23a4688f0470964ee578" style="width:100%;height:432.632880098888px;" class="parcats html-widget"></div>
+<script type="application/json" data-for="htmlwidget-23a4688f0470964ee578">{"x":{"traces":{"parcats":{"type":"parcats","dimensions":[{"label":"class_X1","values":["0","0","0","0","1","1","1","1"],"categoryorder":"array","categoryarray":["1","0"]},{"label":"creditHistory_no.credits.all.paid","values":["0","0","0","1","0","0","0","1"],"categoryorder":"array","categoryarray":["1","0"]},{"label":"creditHistory_critical.other.existing.credit","values":["0","0","1","not used","0","0","1","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"checkingStatus_X.0","values":["0","1","not used","not used","0","1","not used","not used"],"categoryorder":"array","categoryarray":["not used","1","0"]},{"label":"corels_label","values":["1","0","1","0","1","0","1","0"],"categoryorder":"array","categoryarray":["1","0"]}],"counts":[28,18,6,5,74,19,43,6],"line":{"shape":"hspline","color":["#CC6666","#CC6666","#CC6666","#CC6666","lightgreen","lightgreen","lightgreen","lightgreen"]},"hoveron":"dimension","hoverinfo":"count","labelfont":{"size":11},"arrangement":"perpendicular","bundlecolors":true,"sortpaths":"forward","tickfont":null,"domain":{"y":[0,1]}}},"layout":[],"shapes":[],"shapes_original":[],"map_curve":[],"map_trace_2_shape":[],"map_type":[],"map_color":[],"parcats_cols":["#CC6666","#CC6666","#CC6666","#CC6666","lightgreen","lightgreen","lightgreen","lightgreen"],"imp":false},"evals":[],"jsHooks":[]}</script><p>A data frame of the performance of each rule is also provided. This shows us that one of the weaker rules is <code>creditHistory_no.credits.all.paid</code>.</p>
+<div class="sourceCode" id="cb37"><html><body><pre class="r"><span class="no">credit_test_predict</span>$<span class="no">rule_performance_df</span> <span class="kw">%&gt;%</span>
   <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">rule_perc_correct</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">round</a></span>(<span class="no">rule_perc_correct</span>,<span class="fl">1</span>)) <span class="kw">%&gt;%</span>
   <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">rule_perc_correct</span> <span class="kw">=</span> <span class="kw pkg">formattable</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/formattable/man/color_tile.html">color_tile</a></span>(<span class="st">"white"</span>, <span class="st">"orange"</span>)(<span class="no">rule_perc_correct</span>)) <span class="kw">%&gt;%</span>
   <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">rule_fire_count</span> <span class="kw">=</span> <span class="kw pkg">formattable</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/formattable/man/color_tile.html">color_tile</a></span>(<span class="st">"white"</span>, <span class="st">"lightblue"</span>)(<span class="no">rule_fire_count</span>)) <span class="kw">%&gt;%</span>
@@ -584,7 +619,7 @@ else
 </tbody>
 </table>
 <p>If we examine rule success on the training data the weaker <code>creditHistory_no.credits.all.paid</code> does perform better in the training data. However, we usually cannot use test data to improve a classifier without risking overfitting (though one option would be to use all of the data to build Corels rules with cross validation).</p>
-<div class="sourceCode" id="cb37"><html><body><pre class="r"><span class="no">credit_train_model</span>$<span class="no">rule_performance_df</span> <span class="kw">%&gt;%</span>
+<div class="sourceCode" id="cb38"><html><body><pre class="r"><span class="no">credit_train_model</span>$<span class="no">rule_performance_df</span> <span class="kw">%&gt;%</span>
   <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">rule_perc_correct</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">round</a></span>(<span class="no">rule_perc_correct</span>,<span class="fl">1</span>)) <span class="kw">%&gt;%</span>
   <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">rule_perc_correct</span> <span class="kw">=</span> <span class="kw pkg">formattable</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/formattable/man/color_tile.html">color_tile</a></span>(<span class="st">"white"</span>, <span class="st">"orange"</span>)(<span class="no">rule_perc_correct</span>)) <span class="kw">%&gt;%</span>
   <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">rule_fire_count</span> <span class="kw">=</span> <span class="kw pkg">formattable</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/formattable/man/color_tile.html">color_tile</a></span>(<span class="st">"white"</span>, <span class="st">"lightblue"</span>)(<span class="no">rule_fire_count</span>)) <span class="kw">%&gt;%</span>
@@ -680,7 +715,7 @@ else
 <h2 class="hasAnchor">
 <a href="#data-recipe" class="anchor"></a>Data recipe</h2>
 <p>In the data recipe only the categorical columns are one-hot encoded into one column per value.</p>
-<div class="sourceCode" id="cb38"><html><body><pre class="r"><span class="no">xgb_pre_proc</span> <span class="kw">&lt;-</span>
+<div class="sourceCode" id="cb39"><html><body><pre class="r"><span class="no">xgb_pre_proc</span> <span class="kw">&lt;-</span>
   <span class="kw pkg">recipes</span><span class="kw ns">::</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/recipe.html">recipe</a></span>(<span class="no">class</span> ~ <span class="no">.</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">trainData</span>) <span class="kw">%&gt;%</span>
   <span class="kw pkg">recipes</span><span class="kw ns">::</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/step_dummy.html">step_dummy</a></span>(<span class="kw pkg">recipes</span><span class="kw ns">::</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/has_role.html">all_nominal</a></span>(),-<span class="kw pkg">recipes</span><span class="kw ns">::</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/has_role.html">all_outcomes</a></span>(),<span class="kw">one_hot</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></body></html></div>
 </div>
@@ -688,7 +723,7 @@ else
 <h2 class="hasAnchor">
 <a href="#define-model-and-its-parameters" class="anchor"></a>Define model and its parameters</h2>
 <p>Here we define which <a href="https://parsnip.tidymodels.org/reference/boost_tree.html">boost tree parameters</a> will be tuned later and which we fix.</p>
-<div class="sourceCode" id="cb39"><html><body><pre class="r"><span class="no">xgb_mod</span> <span class="kw">&lt;-</span>
+<div class="sourceCode" id="cb40"><html><body><pre class="r"><span class="no">xgb_mod</span> <span class="kw">&lt;-</span>
   <span class="kw pkg">parsnip</span><span class="kw ns">::</span><span class="fu"><a href="https://parsnip.tidymodels.org/reference/boost_tree.html">boost_tree</a></span>(
     <span class="kw">mtry</span> <span class="kw">=</span> <span class="kw pkg">tune</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/tune/man/tune.html">tune</a></span>(),
     <span class="kw">trees</span> <span class="kw">=</span> <span class="fl">500</span>,
@@ -704,7 +739,7 @@ else
 <h2 class="hasAnchor">
 <a href="#add-recipe-and-model-to-a-workflow" class="anchor"></a>Add recipe and model to a workflow</h2>
 <p>The workflow is therefore the data preparation recipe and the model specification (including its type and which parameters are to be tuned later).</p>
-<div class="sourceCode" id="cb40"><html><body><pre class="r"><span class="no">xgb_wflow</span> <span class="kw">&lt;-</span>
+<div class="sourceCode" id="cb41"><html><body><pre class="r"><span class="no">xgb_wflow</span> <span class="kw">&lt;-</span>
   <span class="kw pkg">workflows</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/workflows/man/workflow.html">workflow</a></span>() <span class="kw">%&gt;%</span>
   <span class="kw pkg">workflows</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/workflows/man/add_recipe.html">add_recipe</a></span>(<span class="no">xgb_pre_proc</span>) <span class="kw">%&gt;%</span>
   <span class="kw pkg">workflows</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/workflows/man/add_model.html">add_model</a></span>(<span class="no">xgb_mod</span>)</pre></body></html></div>
@@ -713,7 +748,7 @@ else
 <h2 class="hasAnchor">
 <a href="#define-model-parameters" class="anchor"></a>Define model parameters</h2>
 <p>Let’s now define the parameters by looking at the workflow</p>
-<div class="sourceCode" id="cb41"><html><body><pre class="r"><span class="no">xgb_wflow</span> <span class="kw">%&gt;%</span>
+<div class="sourceCode" id="cb42"><html><body><pre class="r"><span class="no">xgb_wflow</span> <span class="kw">%&gt;%</span>
   <span class="kw pkg">dials</span><span class="kw ns">::</span><span class="fu"><a href="https://dials.tidymodels.org/reference/parameters.html">parameters</a></span>()
 <span class="co">#&gt; Collection of 4 parameters for tuning</span>
 <span class="co">#&gt; </span>
@@ -728,7 +763,7 @@ else
 <span class="co">#&gt; </span>
 <span class="co">#&gt; See `?dials::finalize` or `?dials::update.parameters` for more information.</span></pre></body></html></div>
 <p><code>mtry</code> is the number of predictors that will be randomly sampled at each split when creating the tree models. This is set to range between 40% of the features to all of the features.</p>
-<div class="sourceCode" id="cb42"><html><body><pre class="r"><span class="no">feat_count</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">ncol</a></span>(<span class="no">xgb_pre_proc</span> <span class="kw">%&gt;%</span>
+<div class="sourceCode" id="cb43"><html><body><pre class="r"><span class="no">feat_count</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">ncol</a></span>(<span class="no">xgb_pre_proc</span> <span class="kw">%&gt;%</span>
   <span class="kw pkg">recipes</span><span class="kw ns">::</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/prep.html">prep</a></span>() <span class="kw">%&gt;%</span>
   <span class="kw pkg">recipes</span><span class="kw ns">::</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/juice.html">juice</a></span>() <span class="kw">%&gt;%</span>
   <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(-<span class="no">class</span>))
@@ -744,7 +779,7 @@ else
     <span class="kw">tree_depth</span> <span class="kw">=</span> <span class="kw pkg">dials</span><span class="kw ns">::</span><span class="fu"><a href="https://dials.tidymodels.org/reference/trees.html">tree_depth</a></span>(<span class="kw">range</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">4L</span>, <span class="fl">10L</span>))
   )</pre></body></html></div>
 <p>Now that the range of the parameters has been set, a grid of possible values between those ranges can be created with <code><a href="https://dials.tidymodels.org/reference/grid_max_entropy.html">dials::grid_max_entropy()</a></code>, <em>“to construct parameter grids that try to cover the parameter space such that any portion of the space has an observed combination that is not too far from it.”</em></p>
-<div class="sourceCode" id="cb43"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">1645</span>)
+<div class="sourceCode" id="cb44"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">1645</span>)
 
 <span class="no">xgb_grid</span> <span class="kw">&lt;-</span>
   <span class="no">xgb_params</span> <span class="kw">%&gt;%</span>
@@ -770,7 +805,7 @@ else
 <h2 class="hasAnchor">
 <a href="#tune-xgboost-model" class="anchor"></a>Tune XGBoost model</h2>
 <p>We can now tune the model by <a href="https://www.tidymodels.org/learn/work/tune-svm/">searching the grid of parameters</a>.</p>
-<div class="sourceCode" id="cb44"><html><body><pre class="r"><span class="no">tune_xgb_grid</span> <span class="kw">&lt;-</span>
+<div class="sourceCode" id="cb45"><html><body><pre class="r"><span class="no">tune_xgb_grid</span> <span class="kw">&lt;-</span>
   <span class="kw pkg">tune</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/tune/man/tune_grid.html">tune_grid</a></span>(<span class="no">xgb_wflow</span>,
     <span class="kw">resamples</span> <span class="kw">=</span> <span class="no">folds</span>,
     <span class="kw">grid</span> <span class="kw">=</span> <span class="no">xgb_grid</span>,
@@ -797,7 +832,7 @@ else
 <h2 class="hasAnchor">
 <a href="#tune-with-iterative-bayesian-optimisation" class="anchor"></a>Tune with iterative Bayesian optimisation</h2>
 <p><em>“..iterative search can be used to analyze the existing tuning parameter results and then predict which tuning parameters to try next.”</em> <a href="https://www.tidymodels.org/learn/work/bayes-opt/">see</a></p>
-<div class="sourceCode" id="cb45"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">1600</span>)
+<div class="sourceCode" id="cb46"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">1600</span>)
 
 <span class="no">xgb_bayes_tune</span> <span class="kw">&lt;-</span>
   <span class="kw pkg">tune</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/tune/man/tune_bayes.html">tune_bayes</a></span>(<span class="no">xgb_wflow</span>,
@@ -817,7 +852,7 @@ else
 <h2 class="hasAnchor">
 <a href="#select-best-model-parameters" class="anchor"></a>Select best model parameters</h2>
 <p>We can select the hyperparameters giving the best results with <code><a href="https://rdrr.io/pkg/tune/man/show_best.html">tune::select_best()</a></code> according to our chosen metric (area under the ROC curve).</p>
-<div class="sourceCode" id="cb46"><html><body><pre class="r"><span class="no">best_xgb</span> <span class="kw">&lt;-</span>
+<div class="sourceCode" id="cb47"><html><body><pre class="r"><span class="no">best_xgb</span> <span class="kw">&lt;-</span>
   <span class="no">xgb_bayes_tune</span> <span class="kw">%&gt;%</span>
   <span class="kw pkg">tune</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/tune/man/show_best.html">select_best</a></span>(<span class="kw">metric</span> <span class="kw">=</span> <span class="st">"roc_auc"</span>)
 
@@ -827,21 +862,21 @@ else
 <span class="co">#&gt;   &lt;int&gt; &lt;int&gt;      &lt;int&gt;       &lt;dbl&gt;</span>
 <span class="co">#&gt; 1    60     2          6       0.502</span></pre></body></html></div>
 <p>We now use <code><a href="https://rdrr.io/pkg/tune/man/finalize_model.html">tune::finalize_workflow()</a></code> to generate a workflow object that adds the best performing model.</p>
-<div class="sourceCode" id="cb47"><html><body><pre class="r"><span class="no">best_xgb_wfl</span> <span class="kw">&lt;-</span>
+<div class="sourceCode" id="cb48"><html><body><pre class="r"><span class="no">best_xgb_wfl</span> <span class="kw">&lt;-</span>
   <span class="kw pkg">tune</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/tune/man/finalize_model.html">finalize_workflow</a></span>(<span class="no">xgb_wflow</span>,
     <span class="kw">parameters</span> <span class="kw">=</span> <span class="no">best_xgb</span>
   )
 <span class="no">best_xgb_wfl</span>
-<span class="co">#&gt; == Workflow ===============================================================================================================</span>
+<span class="co">#&gt; == Workflow ==============================================================================================================</span>
 <span class="co">#&gt; Preprocessor: Recipe</span>
 <span class="co">#&gt; Model: boost_tree()</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; -- Preprocessor -----------------------------------------------------------------------------------------------------------</span>
+<span class="co">#&gt; -- Preprocessor ----------------------------------------------------------------------------------------------------------</span>
 <span class="co">#&gt; 1 Recipe Step</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; * step_dummy()</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; -- Model ------------------------------------------------------------------------------------------------------------------</span>
+<span class="co">#&gt; -- Model -----------------------------------------------------------------------------------------------------------------</span>
 <span class="co">#&gt; Boosted Tree Model Specification (classification)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Main Arguments:</span>
@@ -854,21 +889,21 @@ else
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Computational engine: xgboost</span></pre></body></html></div>
 <p>And then generate a fitted model from that workflow on the training data.</p>
-<div class="sourceCode" id="cb48"><html><body><pre class="r"><span class="no">final_fit</span> <span class="kw">&lt;-</span>
+<div class="sourceCode" id="cb49"><html><body><pre class="r"><span class="no">final_fit</span> <span class="kw">&lt;-</span>
   <span class="no">best_xgb_wfl</span> <span class="kw">%&gt;%</span>
   <span class="kw pkg">parsnip</span><span class="kw ns">::</span><span class="fu"><a href="https://parsnip.tidymodels.org/reference/reexports.html">fit</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">trainData</span>)
 
 <span class="no">final_fit</span>
-<span class="co">#&gt; == Workflow [trained] =====================================================================================================</span>
+<span class="co">#&gt; == Workflow [trained] ====================================================================================================</span>
 <span class="co">#&gt; Preprocessor: Recipe</span>
 <span class="co">#&gt; Model: boost_tree()</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; -- Preprocessor -----------------------------------------------------------------------------------------------------------</span>
+<span class="co">#&gt; -- Preprocessor ----------------------------------------------------------------------------------------------------------</span>
 <span class="co">#&gt; 1 Recipe Step</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; * step_dummy()</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; -- Model ------------------------------------------------------------------------------------------------------------------</span>
+<span class="co">#&gt; -- Model -----------------------------------------------------------------------------------------------------------------</span>
 <span class="co">#&gt; ##### xgb.Booster</span>
 <span class="co">#&gt; raw: 645.9 Kb </span>
 <span class="co">#&gt; call:</span>
@@ -898,7 +933,7 @@ else
 <h2 class="hasAnchor">
 <a href="#variable-importance" class="anchor"></a>Variable importance</h2>
 <p>The <a href="https://koalaverse.github.io/vip/index.html"><code>{vip}</code></a> package provides variable importance plots. Further methods are well described in the <a href="https://christophm.github.io/interpretable-ml-book/">Interpretable machine learning</a> book.</p>
-<div class="sourceCode" id="cb49"><html><body><pre class="r"><span class="no">final_fit</span> <span class="kw">%&gt;%</span>
+<div class="sourceCode" id="cb50"><html><body><pre class="r"><span class="no">final_fit</span> <span class="kw">%&gt;%</span>
   <span class="kw pkg">workflows</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/workflows/man/workflow-extractors.html">pull_workflow_fit</a></span>() <span class="kw">%&gt;%</span>
   <span class="kw pkg">vip</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/vip/man/vip.html">vip</a></span>(
     <span class="kw">geom</span> <span class="kw">=</span> <span class="st">"col"</span>,
@@ -911,7 +946,7 @@ else
 <h2 class="hasAnchor">
 <a href="#xgboost-performance-on-train" class="anchor"></a>XGBoost performance on train</h2>
 <p>First we plot the ROC curve for all cut points of the probability of a good loan.</p>
-<div class="sourceCode" id="cb50"><html><body><pre class="r"><span class="no">xgb_train_preds</span> <span class="kw">&lt;-</span> <span class="no">final_fit</span> <span class="kw">%&gt;%</span>
+<div class="sourceCode" id="cb51"><html><body><pre class="r"><span class="no">xgb_train_preds</span> <span class="kw">&lt;-</span> <span class="no">final_fit</span> <span class="kw">%&gt;%</span>
   <span class="kw pkg">stats</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html">predict</a></span>(
     <span class="kw">new_data</span> <span class="kw">=</span> <span class="no">trainData</span>,
     <span class="kw">type</span> <span class="kw">=</span> <span class="st">"prob"</span>
@@ -939,9 +974,9 @@ else
         <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html">pull</a></span>(<span class="no">.estimate</span>)
     )
   )</pre></body></html></div>
-<p><img src="german_credit_data_example_files/figure-html/unnamed-chunk-26-1.png" width="700"></p>
+<p><img src="german_credit_data_example_files/figure-html/unnamed-chunk-27-1.png" width="700"></p>
 <p>To create a confusion matrix requires we select a cut off in the probability to label each record. We use <code><a href="https://rdrr.io/pkg/pROC/man/coords.html">pROC::coords</a></code> from the <a href="https://github.com/xrobin/pROC">pROC</a> package to select the best threshold.</p>
-<div class="sourceCode" id="cb51"><html><body><pre class="r"><span class="co"># calculate best threshold for classification label</span>
+<div class="sourceCode" id="cb52"><html><body><pre class="r"><span class="co"># calculate best threshold for classification label</span>
 <span class="no">my_roc</span> <span class="kw">&lt;-</span> <span class="kw pkg">pROC</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/pROC/man/roc.html">roc</a></span>(
   <span class="kw">predictor</span> <span class="kw">=</span> <span class="no">xgb_train_preds</span>$<span class="no">.pred_1</span>,
   <span class="kw">response</span> <span class="kw">=</span> <span class="no">xgb_train_preds</span>$<span class="no">class</span>
@@ -964,9 +999,9 @@ else
 )
 
 <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span>(<span class="no">cmat_train</span>, <span class="st">"heatmap"</span>)</pre></body></html></div>
-<p><img src="german_credit_data_example_files/figure-html/unnamed-chunk-27-1.png" width="700"></p>
+<p><img src="german_credit_data_example_files/figure-html/unnamed-chunk-28-1.png" width="700"></p>
 <p>The confusion matrix can be used to generate the performance statistics below. All metrics are impressively high on the training data and superior to Corels. However, this could be due to overfitting. We can now use the test data to test for over fitting.</p>
-<div class="sourceCode" id="cb52"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>(<span class="no">cmat_train</span>,
+<div class="sourceCode" id="cb53"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>(<span class="no">cmat_train</span>,
         <span class="kw">event_level</span> <span class="kw">=</span> <span class="st">"second"</span>) <span class="kw">%&gt;%</span>
   <span class="kw pkg">dplyr</span><span class="kw ns">:::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">.estimate</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">round</a></span>(<span class="no">.estimate</span>, <span class="kw">digits</span> <span class="kw">=</span> <span class="fl">3</span>)) <span class="kw">%&gt;%</span>
   <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="no">.metric</span>, <span class="no">.estimate</span>) <span class="kw">%&gt;%</span>
@@ -1036,7 +1071,7 @@ f_meas
 <a href="#xgboost-performance-on-test" class="anchor"></a>XGBoost performance on test</h2>
 <p>In contrast to the training data, the test set performance is much lower for all metrics.</p>
 <p>An important evaluation metric is precision. This is because incorrectly labelling bad loans as good has the greatest cost.</p>
-<div class="sourceCode" id="cb53"><html><body><pre class="r"><span class="no">xgb_test_preds</span> <span class="kw">&lt;-</span> <span class="no">final_fit</span> <span class="kw">%&gt;%</span>
+<div class="sourceCode" id="cb54"><html><body><pre class="r"><span class="no">xgb_test_preds</span> <span class="kw">&lt;-</span> <span class="no">final_fit</span> <span class="kw">%&gt;%</span>
   <span class="kw pkg">stats</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html">predict</a></span>(
     <span class="kw">new_data</span> <span class="kw">=</span> <span class="no">testData</span>,
     <span class="kw">type</span> <span class="kw">=</span> <span class="st">"prob"</span>
@@ -1073,7 +1108,7 @@ f_meas
     )
   )</pre></body></html></div>
 <p><img src="german_credit_data_example_files/figure-html/test%20AUC%20XGBoost-1.png" width="700"></p>
-<div class="sourceCode" id="cb54"><html><body><pre class="r">
+<div class="sourceCode" id="cb55"><html><body><pre class="r">
 <span class="co"># confusion matrix</span>
 <span class="no">cmat_test</span> <span class="kw">&lt;-</span> <span class="kw pkg">yardstick</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/yardstick/man/conf_mat.html">conf_mat</a></span>(<span class="no">xgb_test_preds</span>,
   <span class="kw">truth</span> <span class="kw">=</span> <span class="st">"class"</span>,
@@ -1082,7 +1117,7 @@ f_meas
 
 <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span>(<span class="no">cmat_test</span>, <span class="st">"heatmap"</span>)</pre></body></html></div>
 <p><img src="german_credit_data_example_files/figure-html/test%20AUC%20XGBoost-2.png" width="700"></p>
-<div class="sourceCode" id="cb55"><html><body><pre class="r">
+<div class="sourceCode" id="cb56"><html><body><pre class="r">
 <span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>(<span class="no">cmat_test</span>,
         <span class="kw">event_level</span> <span class="kw">=</span> <span class="st">"second"</span>) <span class="kw">%&gt;%</span>
   <span class="kw pkg">dplyr</span><span class="kw ns">:::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">.estimate</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">round</a></span>(<span class="no">.estimate</span>, <span class="kw">digits</span> <span class="kw">=</span> <span class="fl">3</span>)) <span class="kw">%&gt;%</span>

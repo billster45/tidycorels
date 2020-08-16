@@ -128,6 +128,9 @@
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">tidycorels</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">easyalluvial</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">parcats</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">networkD3</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">visNetwork</span>)
+<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">formattable</span>)
 
 <span class="no">mtcars_recipe</span> <span class="kw">&lt;-</span><span class="kw pkg">recipes</span><span class="kw ns">::</span><span class="fu"><a href="https://recipes.tidymodels.org/reference/recipe.html">recipe</a></span>(<span class="no">am</span> ~ <span class="no">.</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="kw pkg">datasets</span><span class="kw ns">::</span><span class="no"><a href="https://rdrr.io/r/datasets/mtcars.html">mtcars</a></span>) <span class="kw">%&gt;%</span>
   <span class="co"># 1 discretise continous variables into bins</span>
@@ -184,12 +187,43 @@
                          <span class="kw">sinksRight</span> <span class="kw">=</span> <span class="fl">TRUE</span>
                          )</pre></div>
 <p><img src="README_files/figure-gfm/unnamed-chunk-6-1.png"><!-- --></p>
+<p>And with some manipualation of the nodes and edges data, the rules can be viewed as a <a href="https://datastorm-open.github.io/visNetwork/layout.html">visNetwork</a> visualisation.</p>
+<div class="sourceCode" id="cb9"><pre class="r"><span class="no">rule_count</span> <span class="kw">&lt;-</span> <span class="kw pkg">base</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span>(<span class="no">corels_mtcars</span>$<span class="no">rule_performance_df</span>)
+<span class="co"># extract the rule order (or levels)</span>
+<span class="no">level</span> <span class="kw">&lt;-</span> <span class="no">corels_mtcars</span>$<span class="no">rule_performance_df</span> <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">level</span> <span class="kw">=</span> <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/ranking.html">row_number</a></span>()) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html">rename</a></span>(<span class="kw">level_label</span> <span class="kw">=</span> <span class="no">rule</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="no">level_label</span>,<span class="no">level</span>)
+
+<span class="co"># rename the edges</span>
+<span class="no">edges</span> <span class="kw">&lt;-</span> <span class="no">corels_mtcars</span>$<span class="no">sankey_edges_df</span> <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html">rename</a></span>(<span class="kw">from</span> <span class="kw">=</span> <span class="no">source</span>, <span class="kw">to</span> <span class="kw">=</span> <span class="no">target</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">title</span> <span class="kw">=</span> <span class="no">value</span>)
+
+<span class="co"># add the levels</span>
+<span class="no">nodes</span> <span class="kw">&lt;-</span> <span class="no">corels_mtcars</span>$<span class="no">sankey_nodes_df</span> <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html">rename</a></span>(<span class="kw">id</span> <span class="kw">=</span> <span class="no">ID</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">level_label</span> <span class="kw">=</span> <span class="kw pkg">stringi</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/stringi/man/stri_trim.html">stri_trim_both</a></span>(<span class="kw pkg">stringi</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/stringi/man/stri_sub.html">stri_sub</a></span>(<span class="no">label</span>,<span class="fl">1</span>,-<span class="fl">4</span>))) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html">left_join</a></span>(<span class="no">level</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">level</span> <span class="kw">=</span> <span class="fu">case_when</span>(<span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span>(<span class="no">level</span>) ~ <span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span>(<span class="no">rule_count</span>),<span class="fl">TRUE</span> ~<span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span>(<span class="no">level</span>))) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html">rename</a></span>(<span class="kw">title</span> <span class="kw">=</span> <span class="no">level_label</span>)
+
+<span class="kw pkg">visNetwork</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/visNetwork/man/visNetwork.html">visNetwork</a></span>(<span class="no">nodes</span>, <span class="no">edges</span>, <span class="kw">width</span> <span class="kw">=</span> <span class="st">"100%"</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">visNetwork</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/visNetwork/man/visNodes.html">visNodes</a></span>(<span class="kw">size</span> <span class="kw">=</span> <span class="fl">12</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">visNetwork</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/visNetwork/man/visEdges.html">visEdges</a></span>(<span class="kw">arrows</span> <span class="kw">=</span> <span class="st">"to"</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">visNetwork</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/visNetwork/man/visHierarchicalLayout.html">visHierarchicalLayout</a></span>(<span class="kw">direction</span> <span class="kw">=</span> <span class="st">"UD"</span>,
+                                    <span class="kw">levelSeparation</span> <span class="kw">=</span> <span class="fl">80</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">visNetwork</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/visNetwork/man/visInteraction.html">visInteraction</a></span>(<span class="kw">navigationButtons</span> <span class="kw">=</span> <span class="fl">TRUE</span>) <span class="kw">%&gt;%</span>
+  <span class="kw pkg">visNetwork</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/visNetwork/man/visOptions.html">visOptions</a></span>(<span class="kw">highlightNearest</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">enabled</span> <span class="kw">=</span> <span class="no">T</span>, <span class="kw">hover</span> <span class="kw">=</span> <span class="no">T</span>),
+                         <span class="kw">nodesIdSelection</span> <span class="kw">=</span> <span class="no">T</span>,
+                         <span class="kw">collapse</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></div>
+<p><img src="README_files/figure-gfm/unnamed-chunk-7-1.png"><!-- --></p>
 </div>
 <div id="alluvial-plot" class="section level3">
 <h3 class="hasAnchor">
 <a href="#alluvial-plot" class="anchor"></a>Alluvial plot</h3>
 <p>A dataframe of just the true label, the columns used in the Corels rules, and the Corels label from those rules is also available. The columns have been ordered in the order of the Corels rules so that they work well in an <a href="https://github.com/erblast/easyalluvial/blob/master/README.md">alluvial</a> plot.</p>
-<div class="sourceCode" id="cb9"><pre class="r"><span class="no">p</span> <span class="kw">&lt;-</span> <span class="no">corels_mtcars</span>$<span class="no">alluvial_df</span> <span class="kw">%&gt;%</span>
+<div class="sourceCode" id="cb10"><pre class="r"><span class="no">p</span> <span class="kw">&lt;-</span> <span class="no">corels_mtcars</span>$<span class="no">alluvial_df</span> <span class="kw">%&gt;%</span>
   <span class="kw pkg">easyalluvial</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/easyalluvial/man/alluvial_wide.html">alluvial_wide</a></span>(<span class="kw">stratum_width</span> <span class="kw">=</span> <span class="fl">0.2</span>,
                               <span class="kw">NA_label</span> <span class="kw">=</span> <span class="st">"not used"</span>) +
   <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_minimal</a></span>() +
@@ -198,24 +232,24 @@
     <span class="kw">subtitle</span> <span class="kw">=</span> <span class="st">" From truth (far left column) to Corels classification (far right column)"</span>
   )
 <span class="no">p</span></pre></div>
-<p><img src="README_files/figure-gfm/unnamed-chunk-7-1.png"><!-- --></p>
+<p><img src="README_files/figure-gfm/unnamed-chunk-8-1.png"><!-- --></p>
 <p>The leftmost column is the true label for each car, either automatic (0) or manual (1). The rightmost column is the Corels classification label after applying the rules from left to right.</p>
 <p>The alluvial plot clearly shows which rules are important in the classifcation and exactly how the classifiation is arrived at. For example, if we follow one green path of manual cars (am_X1 = 1), they have more than 3 gears (gear_X3 = 0), low weight (wt_bin_1 ==1). The shape of the engine (vs_x0) column is not used.</p>
 <p>We can also create an <a href="https://erblast.github.io/easyalluvial/articles/parcats.html">interactive</a> version of the alluvial plot.</p>
-<div class="sourceCode" id="cb10"><pre class="r"><span class="kw pkg">parcats</span><span class="kw ns">::</span><span class="fu"><a href="https://erblast.github.io/parcats//reference/parcats.html">parcats</a></span>(<span class="kw">p</span> <span class="kw">=</span> <span class="no">p</span>,
+<div class="sourceCode" id="cb11"><pre class="r"><span class="kw pkg">parcats</span><span class="kw ns">::</span><span class="fu"><a href="https://erblast.github.io/parcats//reference/parcats.html">parcats</a></span>(<span class="kw">p</span> <span class="kw">=</span> <span class="no">p</span>,
                  <span class="kw">data_input</span> <span class="kw">=</span> <span class="no">corels_mtcars</span>$<span class="no">alluvial_df</span>,
                  <span class="kw">marginal_histograms</span> <span class="kw">=</span> <span class="fl">FALSE</span>,
                  <span class="kw">hoveron</span> <span class="kw">=</span> <span class="st">'dimension'</span>,
                  <span class="kw">hoverinfo</span> <span class="kw">=</span> <span class="st">'count'</span>,
                  <span class="kw">labelfont</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">size</span> <span class="kw">=</span> <span class="fl">11</span>)
 )</pre></div>
-<p><img src="README_files/figure-gfm/unnamed-chunk-8-1.png"><!-- --></p>
+<p><img src="README_files/figure-gfm/unnamed-chunk-9-1.png"><!-- --></p>
 </div>
 <div id="performance-on-training-data" class="section level3">
 <h3 class="hasAnchor">
 <a href="#performance-on-training-data" class="anchor"></a>Performance on training data</h3>
 <p>We can also create a confusion matrix to examine the performance of the rules.</p>
-<div class="sourceCode" id="cb11"><pre class="r"><span class="no">conf_matrix</span> <span class="kw">&lt;-</span>
+<div class="sourceCode" id="cb12"><pre class="r"><span class="no">conf_matrix</span> <span class="kw">&lt;-</span>
   <span class="no">corels_mtcars</span>$<span class="no">alluvial_df</span> <span class="kw">%&gt;%</span>
   <span class="kw pkg">yardstick</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/yardstick/man/conf_mat.html">conf_mat</a></span>(
     <span class="kw">truth</span> <span class="kw">=</span> <span class="st">"am_X1"</span>,
@@ -223,13 +257,13 @@
   )
 
 <span class="kw pkg">ggplot2</span><span class="kw ns">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span>(<span class="no">conf_matrix</span>, <span class="st">"heatmap"</span>)</pre></div>
-<p><img src="README_files/figure-gfm/unnamed-chunk-9-1.png"><!-- --></p>
+<p><img src="README_files/figure-gfm/unnamed-chunk-10-1.png"><!-- --></p>
 </div>
 <div id="performance-of-each-rule" class="section level3">
 <h3 class="hasAnchor">
 <a href="#performance-of-each-rule" class="anchor"></a>Performance of each rule</h3>
 <p>A data frame of the performance of each rule is also provided.</p>
-<div class="sourceCode" id="cb12"><pre class="r"><span class="no">corels_mtcars</span>$<span class="no">rule_performance_df</span> <span class="kw">%&gt;%</span>
+<div class="sourceCode" id="cb13"><pre class="r"><span class="no">corels_mtcars</span>$<span class="no">rule_performance_df</span> <span class="kw">%&gt;%</span>
   <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">rule_perc_correct</span> <span class="kw">=</span> <span class="kw pkg">formattable</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/formattable/man/color_tile.html">color_tile</a></span>(<span class="st">"white"</span>, <span class="st">"orange"</span>)(<span class="no">rule_perc_correct</span>)) <span class="kw">%&gt;%</span>
   <span class="kw pkg">dplyr</span><span class="kw ns">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">rule_fire_count</span> <span class="kw">=</span> <span class="kw pkg">formattable</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/formattable/man/color_tile.html">color_tile</a></span>(<span class="st">"white"</span>, <span class="st">"lightblue"</span>)(<span class="no">rule_fire_count</span>)) <span class="kw">%&gt;%</span>
   <span class="kw pkg">kableExtra</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/reexports.html">kable</a></span>(<span class="kw">escape</span> <span class="kw">=</span> <span class="no">F</span>,

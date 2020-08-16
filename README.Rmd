@@ -43,6 +43,9 @@ library(corels)
 library(tidycorels)
 library(easyalluvial)
 library(parcats)
+library(networkD3)
+library(visNetwork)
+library(formattable)
 
 mtcars_recipe <-recipes::recipe(am ~ ., data = datasets::mtcars) %>%
   # 1 discretise continous variables into bins
@@ -111,6 +114,40 @@ networkD3::sankeyNetwork(# edges
                          nodeWidth = 40,
                          sinksRight = TRUE
                          )
+```
+
+And with some manipualation of the nodes and edges data, the rules can be viewed as a [visNetwork](https://datastorm-open.github.io/visNetwork/layout.html) visualisation.
+
+```{r}
+rule_count <- base::nrow(corels_mtcars$rule_performance_df)
+# extract the rule order (or levels)
+level <- corels_mtcars$rule_performance_df %>% 
+  dplyr::mutate(level = dplyr::row_number()) %>% 
+  dplyr::rename(level_label = rule) %>% 
+  dplyr::select(level_label,level)
+
+# rename the edges
+edges <- corels_mtcars$sankey_edges_df %>% 
+  dplyr::rename(from = source, to = target) %>% 
+  dplyr::mutate(title = value)
+
+# add the levels
+nodes <- corels_mtcars$sankey_nodes_df %>% 
+  dplyr::rename(id = ID) %>% 
+  dplyr::mutate(level_label = stringi::stri_trim_both(stringi::stri_sub(label,1,-4))) %>% 
+  dplyr::left_join(level) %>% 
+  dplyr::mutate(level = case_when(is.na(level) ~ as.numeric(rule_count),TRUE ~as.numeric(level))) %>% 
+  dplyr::rename(title = level_label)
+
+visNetwork::visNetwork(nodes, edges, width = "100%") %>% 
+  visNetwork::visNodes(size = 12) %>% 
+  visNetwork::visEdges(arrows = "to") %>% 
+  visNetwork::visHierarchicalLayout(direction = "UD", 
+                                    levelSeparation = 80) %>% 
+  visNetwork::visInteraction(navigationButtons = TRUE) %>% 
+  visNetwork::visOptions(highlightNearest = list(enabled = T, hover = T), 
+                         nodesIdSelection = T,
+                         collapse = TRUE)
 ```
 
 ### Alluvial plot

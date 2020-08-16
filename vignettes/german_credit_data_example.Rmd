@@ -2,7 +2,7 @@
 title: "Corels vs XGBoost"
 date: "`r Sys.Date()`"
 output:
-  github_document:
+  html_document:
     toc: true
     toc_depth: 3
 always_allow_html: yes
@@ -51,6 +51,7 @@ library(easyalluvial)
 library(parcats)
 library(networkD3)
 library(formattable)
+library(visNetwork)
 
 clean_df <- read.table(file = "https://www.openml.org/data/get_csv/31/dataset_31_credit-g.arff",
                        header = TRUE,
@@ -237,7 +238,7 @@ credit_train_model <-
 Here are the Corels rules for predicting a good loan.
 
 ```{r}
-credit_train_model$corels_console_output[3:6]
+credit_train_model$corels_console_output[2:7]
 ```
 
 And we can view the Corels rules as a [D3 network sankey diagram](https://christophergandrud.github.io/networkD3/#sankey) when applied to the training data.
@@ -257,6 +258,41 @@ networkD3::sankeyNetwork(# edges
                          sinksRight = TRUE
                          )
 ```
+
+And with some manipualation of the nodes and edges data, the rules can be viewed as a [visNetwork](https://datastorm-open.github.io/visNetwork/layout.html) visualisation.
+
+```{r}
+rule_count <- base::nrow(credit_train_model$rule_performance_df)
+# extract the rule order (or levels)
+level <- credit_train_model$rule_performance_df %>% 
+  dplyr::mutate(level = dplyr::row_number()) %>% 
+  dplyr::rename(level_label = rule) %>% 
+  dplyr::select(level_label,level)
+
+# rename the edges
+edges <- credit_train_model$sankey_edges_df %>% 
+  dplyr::rename(from = source, to = target) %>% 
+  dplyr::mutate(title = value)
+
+# add the levels
+nodes <- credit_train_model$sankey_nodes_df %>% 
+  dplyr::rename(id = ID) %>% 
+  dplyr::mutate(level_label = stringi::stri_trim_both(stringi::stri_sub(label,1,-4))) %>% 
+  dplyr::left_join(level) %>% 
+  dplyr::mutate(level = case_when(is.na(level) ~ as.numeric(rule_count),TRUE ~as.numeric(level))) %>% 
+  dplyr::rename(title = level_label)
+
+visNetwork::visNetwork(nodes, edges, width = "100%") %>% 
+  visNetwork::visNodes(size = 12) %>% 
+  visNetwork::visEdges(arrows = "to") %>% 
+  visNetwork::visHierarchicalLayout(direction = "UD", 
+                                    levelSeparation = 80) %>% 
+  visNetwork::visInteraction(navigationButtons = TRUE) %>% 
+  visNetwork::visOptions(highlightNearest = list(enabled = T, hover = T), 
+                         nodesIdSelection = T,
+                         collapse = TRUE)
+```
+
 
 A dataframe of just the true label, the columns used in the Corels rules, and the Corels predictions is returned. The columns have been ordered for you to work well in an [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md) plot.
 

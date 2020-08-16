@@ -70,6 +70,9 @@ library(corels)
 library(tidycorels)
 library(easyalluvial)
 library(parcats)
+library(networkD3)
+library(visNetwork)
+library(formattable)
 
 mtcars_recipe <-recipes::recipe(am ~ ., data = datasets::mtcars) %>%
   # 1 discretise continous variables into bins
@@ -160,6 +163,45 @@ networkD3::sankeyNetwork(# edges
 
 ![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
+And with some manipualation of the nodes and edges data, the rules can
+be viewed as a
+[visNetwork](https://datastorm-open.github.io/visNetwork/layout.html)
+visualisation.
+
+``` r
+rule_count <- base::nrow(corels_mtcars$rule_performance_df)
+# extract the rule order (or levels)
+level <- corels_mtcars$rule_performance_df %>% 
+  dplyr::mutate(level = dplyr::row_number()) %>% 
+  dplyr::rename(level_label = rule) %>% 
+  dplyr::select(level_label,level)
+
+# rename the edges
+edges <- corels_mtcars$sankey_edges_df %>% 
+  dplyr::rename(from = source, to = target) %>% 
+  dplyr::mutate(title = value)
+
+# add the levels
+nodes <- corels_mtcars$sankey_nodes_df %>% 
+  dplyr::rename(id = ID) %>% 
+  dplyr::mutate(level_label = stringi::stri_trim_both(stringi::stri_sub(label,1,-4))) %>% 
+  dplyr::left_join(level) %>% 
+  dplyr::mutate(level = case_when(is.na(level) ~ as.numeric(rule_count),TRUE ~as.numeric(level))) %>% 
+  dplyr::rename(title = level_label)
+
+visNetwork::visNetwork(nodes, edges, width = "100%") %>% 
+  visNetwork::visNodes(size = 12) %>% 
+  visNetwork::visEdges(arrows = "to") %>% 
+  visNetwork::visHierarchicalLayout(direction = "UD", 
+                                    levelSeparation = 80) %>% 
+  visNetwork::visInteraction(navigationButtons = TRUE) %>% 
+  visNetwork::visOptions(highlightNearest = list(enabled = T, hover = T), 
+                         nodesIdSelection = T,
+                         collapse = TRUE)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
 ### Alluvial plot
 
 A dataframe of just the true label, the columns used in the Corels
@@ -181,7 +223,7 @@ p <- corels_mtcars$alluvial_df %>%
 p
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 The leftmost column is the true label for each car, either automatic (0)
 or manual (1). The rightmost column is the Corels classification label
@@ -207,7 +249,7 @@ parcats::parcats(p = p,
 )
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ### Performance on training data
 
@@ -225,7 +267,7 @@ conf_matrix <-
 ggplot2::autoplot(conf_matrix, "heatmap")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ### Performance of each rule
 
