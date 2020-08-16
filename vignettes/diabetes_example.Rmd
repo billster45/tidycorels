@@ -44,6 +44,7 @@ library(easyalluvial)
 library(parcats)
 library(networkD3)
 library(formattable)
+library(visNetwork)
 
 kable_table <- function(table, title) {
   kableExtra::kable(table, caption = title) %>%
@@ -163,6 +164,40 @@ networkD3::sankeyNetwork(# edges
                          nodeWidth = 40,
                          sinksRight = TRUE
                          )
+```
+
+And with some manipualation of the nodes and edges data, the rules can be viewed as a [visNetwork](https://datastorm-open.github.io/visNetwork/layout.html) visualisation.
+
+```{r}
+rule_count <- base::nrow(diabetes_train_model$rule_performance_df)
+# extract the rule order (or levels)
+level <- diabetes_train_model$rule_performance_df %>% 
+  dplyr::mutate(level = dplyr::row_number()) %>% 
+  dplyr::rename(level_label = rule) %>% 
+  dplyr::select(level_label,level)
+
+# rename the edges
+edges <- diabetes_train_model$sankey_edges_df %>% 
+  dplyr::rename(from = source, to = target) %>% 
+  dplyr::mutate(title = value)
+
+# add the levels
+nodes <- diabetes_train_model$sankey_nodes_df %>% 
+  dplyr::rename(id = ID) %>% 
+  dplyr::mutate(level_label = stringi::stri_trim_both(stringi::stri_sub(label,1,-4))) %>% 
+  dplyr::left_join(level) %>% 
+  dplyr::mutate(level = case_when(is.na(level) ~ as.numeric(rule_count),TRUE ~as.numeric(level))) %>% 
+  dplyr::rename(title = level_label)
+
+visNetwork::visNetwork(nodes, edges, width = "100%") %>% 
+  visNetwork::visNodes(size = 12) %>% 
+  visNetwork::visEdges(arrows = "to") %>% 
+  visNetwork::visHierarchicalLayout(direction = "UD", 
+                                    levelSeparation = 80) %>% 
+  visNetwork::visInteraction(navigationButtons = TRUE) %>% 
+  visNetwork::visOptions(highlightNearest = list(enabled = T, hover = T), 
+                         nodesIdSelection = T,
+                         collapse = TRUE)
 ```
 
 A dataframe of just the true label, the columns used in the Corels rules, and the Corels predictions is also available. The columns have been ordered for you to work well in an [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md) plot.
