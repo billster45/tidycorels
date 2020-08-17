@@ -9,6 +9,7 @@ tidycorels
       - [Performance on training data](#performance-on-training-data)
       - [Performance of each rule](#performance-of-each-rule)
       - [Performance on new data](#performance-on-new-data)
+      - [Comparison to XGBoost rules](#comparison-to-xgboost-rules)
 
 ## What are corels and tidycorels?
 
@@ -66,8 +67,10 @@ to classify where 0 = automatic and 1 = manual gears.
 
 ``` r
 library(tidymodels)
+library(tidypredict)
 library(corels)
 library(tidycorels)
+library(xgboost)
 library(easyalluvial)
 library(parcats)
 library(networkD3)
@@ -448,3 +451,140 @@ intended for an
 [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md)
 plot. Examples can be found in the
 [Articles](https://billster45.github.io/tidycorels/articles/) section.
+
+### Comparison to XGBoost rules
+
+The [tidypredict](https://tidypredict.tidymodels.org/index.html)
+package..
+
+> …reads the model, extracts the components needed to calculate the
+> prediction, and then creates an R formula that can be translated into
+> SQL
+
+A [vignette](https://tidypredict.tidymodels.org/articles/xgboost.html)
+within the tidymodesl package also classifies mtcars into automatic or
+manual using XGBoost. The code is re-peated below to create the data set
+and XGBoost model.
+
+``` r
+xgb_bin_data <- xgboost::xgb.DMatrix(as.matrix(mtcars[, -9]), label = mtcars$am)
+
+model <- xgboost::xgb.train(
+  params = list(max_depth = 2, silent = 1, objective = "binary:logistic", base_score = 0.5),
+  data = xgb_bin_data, nrounds = 50
+)
+```
+
+    ## [20:12:03] WARNING: amalgamation/../src/learner.cc:480: 
+    ## Parameters: { silent } might not be used.
+    ## 
+    ##   This may not be accurate due to some parameters are only used in language bindings but
+    ##   passed down to XGBoost core.  Or some parameters are not used but slip through this
+    ##   verification. Please open an issue if you find above cases.
+
+Then `tidypredict::tidypredict_fit()` is used to return the formula in R
+`dplyr::case_when()` code required to re-create the am classifiation.
+
+``` r
+tidypredict::tidypredict_fit(model)
+```
+
+    ## 1 - 1/(1 + exp(0 + case_when(wt >= 3.18000007 ~ -0.436363667, 
+    ##     (qsec < 19.1849995 | is.na(qsec)) & (wt < 3.18000007 | is.na(wt)) ~ 
+    ##         0.428571463, qsec >= 19.1849995 & (wt < 3.18000007 | 
+    ##         is.na(wt)) ~ 0) + case_when((wt < 3.01250005 | is.na(wt)) ~ 
+    ##     0.311573088, (hp < 222.5 | is.na(hp)) & wt >= 3.01250005 ~ 
+    ##     -0.392053694, hp >= 222.5 & wt >= 3.01250005 ~ -0.0240745768) + 
+    ##     case_when((gear < 3.5 | is.na(gear)) ~ -0.355945677, (wt < 
+    ##         3.01250005 | is.na(wt)) & gear >= 3.5 ~ 0.325712085, 
+    ##         wt >= 3.01250005 & gear >= 3.5 ~ -0.0384863913) + case_when((gear < 
+    ##     3.5 | is.na(gear)) ~ -0.309683114, (wt < 3.01250005 | is.na(wt)) & 
+    ##     gear >= 3.5 ~ 0.283893973, wt >= 3.01250005 & gear >= 3.5 ~ 
+    ##     -0.032039877) + case_when((gear < 3.5 | is.na(gear)) ~ -0.275577009, 
+    ##     (wt < 3.01250005 | is.na(wt)) & gear >= 3.5 ~ 0.252453178, 
+    ##     wt >= 3.01250005 & gear >= 3.5 ~ -0.0266750772) + case_when((gear < 
+    ##     3.5 | is.na(gear)) ~ -0.248323873, (qsec < 17.6599998 | is.na(qsec)) & 
+    ##     gear >= 3.5 ~ 0.261978835, qsec >= 17.6599998 & gear >= 3.5 ~ 
+    ##     -0.00959526002) + case_when((gear < 3.5 | is.na(gear)) ~ 
+    ##     -0.225384533, (wt < 3.01250005 | is.na(wt)) & gear >= 3.5 ~ 
+    ##     0.218285918, wt >= 3.01250005 & gear >= 3.5 ~ -0.0373593047) + 
+    ##     case_when((gear < 3.5 | is.na(gear)) ~ -0.205454513, (qsec < 
+    ##         18.7550011 | is.na(qsec)) & gear >= 3.5 ~ 0.196076646, 
+    ##         qsec >= 18.7550011 & gear >= 3.5 ~ -0.0544253439) + case_when((wt < 
+    ##     3.01250005 | is.na(wt)) ~ 0.149246693, (qsec < 17.4099998 | 
+    ##     is.na(qsec)) & wt >= 3.01250005 ~ 0.0354709327, qsec >= 17.4099998 & 
+    ##     wt >= 3.01250005 ~ -0.226075932) + case_when((gear < 3.5 | 
+    ##     is.na(gear)) ~ -0.184417158, (wt < 3.01250005 | is.na(wt)) & 
+    ##     gear >= 3.5 ~ 0.176768288, wt >= 3.01250005 & gear >= 3.5 ~ 
+    ##     -0.0237750355) + case_when((gear < 3.5 | is.na(gear)) ~ -0.168993726, 
+    ##     (qsec < 18.6049995 | is.na(qsec)) & gear >= 3.5 ~ 0.155569643, 
+    ##     qsec >= 18.6049995 & gear >= 3.5 ~ -0.0325752236) + case_when((wt < 
+    ##     3.01250005 | is.na(wt)) ~ 0.119126029, wt >= 3.01250005 ~ 
+    ##     -0.105012275) + case_when((qsec < 17.1749992 | is.na(qsec)) ~ 
+    ##     0.117254697, qsec >= 17.1749992 ~ -0.0994235724) + case_when((wt < 
+    ##     3.18000007 | is.na(wt)) ~ 0.097100094, wt >= 3.18000007 ~ 
+    ##     -0.10567718) + case_when((wt < 3.18000007 | is.na(wt)) ~ 
+    ##     0.0824323222, wt >= 3.18000007 ~ -0.091120176) + case_when((qsec < 
+    ##     17.5100002 | is.na(qsec)) ~ 0.0854752287, qsec >= 17.5100002 ~ 
+    ##     -0.0764453933) + case_when((wt < 3.18000007 | is.na(wt)) ~ 
+    ##     0.0749477893, wt >= 3.18000007 ~ -0.0799863264) + case_when((qsec < 
+    ##     17.7099991 | is.na(qsec)) ~ 0.0728750378, qsec >= 17.7099991 ~ 
+    ##     -0.0646049976) + case_when((wt < 3.18000007 | is.na(wt)) ~ 
+    ##     0.0682478622, wt >= 3.18000007 ~ -0.0711427554) + case_when((wt < 
+    ##     3.18000007 | is.na(wt)) ~ 0.0579533465, wt >= 3.18000007 ~ 
+    ##     -0.0613371208) + case_when((qsec < 18.1499996 | is.na(qsec)) ~ 
+    ##     0.0595484748, qsec >= 18.1499996 ~ -0.0546668135) + case_when((wt < 
+    ##     3.18000007 | is.na(wt)) ~ 0.0535288528, wt >= 3.18000007 ~ 
+    ##     -0.0558333211) + case_when((wt < 3.18000007 | is.na(wt)) ~ 
+    ##     0.0454574414, wt >= 3.18000007 ~ -0.048143398) + case_when((qsec < 
+    ##     18.5600014 | is.na(qsec)) ~ 0.0422042683, qsec >= 18.5600014 ~ 
+    ##     -0.0454404354) + case_when((wt < 3.18000007 | is.na(wt)) ~ 
+    ##     0.0420555808, wt >= 3.18000007 ~ -0.0449385941) + case_when((qsec < 
+    ##     18.5600014 | is.na(qsec)) ~ 0.0393446013, qsec >= 18.5600014 ~ 
+    ##     -0.0425945036) + case_when((wt < 3.18000007 | is.na(wt)) ~ 
+    ##     0.0391179025, wt >= 3.18000007 ~ -0.0420661867) + case_when((qsec < 
+    ##     18.4099998 | is.na(qsec)) ~ 0.0304145869, qsec >= 18.4099998 ~ 
+    ##     -0.031833414) + case_when((wt < 3.18000007 | is.na(wt)) ~ 
+    ##     0.0362136625, wt >= 3.18000007 ~ -0.038949281) + case_when((qsec < 
+    ##     18.4099998 | is.na(qsec)) ~ 0.0295153651, qsec >= 18.4099998 ~ 
+    ##     -0.0307046026) + case_when((drat < 3.80999994 | is.na(drat)) ~ 
+    ##     -0.0306891855, drat >= 3.80999994 ~ 0.0288283136) + case_when((qsec < 
+    ##     18.4099998 | is.na(qsec)) ~ 0.0271221269, qsec >= 18.4099998 ~ 
+    ##     -0.0281750448) + case_when((qsec < 18.4099998 | is.na(qsec)) ~ 
+    ##     0.0228891298, qsec >= 18.4099998 ~ -0.0238814205) + case_when((drat < 
+    ##     3.80999994 | is.na(drat)) ~ -0.0296511576, drat >= 3.80999994 ~ 
+    ##     0.0280048084) + case_when((qsec < 18.4099998 | is.na(qsec)) ~ 
+    ##     0.0214707125, qsec >= 18.4099998 ~ -0.0224219449) + case_when((qsec < 
+    ##     18.4099998 | is.na(qsec)) ~ 0.0181306079, qsec >= 18.4099998 ~ 
+    ##     -0.0190209728) + case_when((wt < 3.18000007 | is.na(wt)) ~ 
+    ##     0.0379650332, wt >= 3.18000007 ~ -0.0395050682) + case_when((qsec < 
+    ##     18.4099998 | is.na(qsec)) ~ 0.0194106717, qsec >= 18.4099998 ~ 
+    ##     -0.0202215631) + case_when((qsec < 18.4099998 | is.na(qsec)) ~ 
+    ##     0.0164139606, qsec >= 18.4099998 ~ -0.0171694476) + case_when((qsec < 
+    ##     18.4099998 | is.na(qsec)) ~ 0.013879573, qsec >= 18.4099998 ~ 
+    ##     -0.0145772668) + case_when((qsec < 18.4099998 | is.na(qsec)) ~ 
+    ##     0.0117362784, qsec >= 18.4099998 ~ -0.0123759825) + case_when((wt < 
+    ##     3.18000007 | is.na(wt)) ~ 0.0388614088, wt >= 3.18000007 ~ 
+    ##     -0.0400568396) + case_when(TRUE ~ -0.000357544719) + case_when(TRUE ~ 
+    ##     -0.000285989838) + case_when(TRUE ~ -0.000228823963) + case_when(TRUE ~ 
+    ##     -0.00018303754) + case_when(TRUE ~ -0.000146419203) + case_when(TRUE ~ 
+    ##     -0.000117138377) + case_when(TRUE ~ -9.37248842e-05) + case_when(TRUE ~ 
+    ##     -7.49547908e-05)))
+
+Note how complex this formula is in contrast to the simple Corels rules.
+
+Next, `tidypredict::tidypredict_to_column()` adds a new column `fit` to
+the results from `tidypredict::tidypredict_fit()`. Visualising the
+probability in `fit` against the outcome `am` we can see XGBoost also
+seperates the cars well into automatic and manual.
+
+``` r
+mtcars %>%
+  tidypredict::tidypredict_to_column(model) %>% 
+  ggplot2::ggplot() + 
+  ggplot2::aes(x = as.factor(am), y = fit) + 
+  ggplot2::geom_jitter() +
+  ggplot2::theme_minimal()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
