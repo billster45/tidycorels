@@ -39,8 +39,10 @@ Corels also requires the label column is split into two columns representing eac
 
 ```{r}
 library(tidymodels)
+library(tidypredict)
 library(corels)
 library(tidycorels)
+library(xgboost)
 library(easyalluvial)
 library(parcats)
 library(networkD3)
@@ -213,3 +215,39 @@ corels_mtcars$rule_performance_df %>%
 ### Performance on new data
 
 Use `tidycorels::predict_corels()` to apply the Corels rules to a new dataframe (e.g. test data). It also returns the smaller data frame intended for an [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md) plot. Examples can be found in the [Articles](https://billster45.github.io/tidycorels/articles/) section.
+
+### Comparison to XGBoost rules
+
+The [tidypredict](https://tidypredict.tidymodels.org/index.html) package..
+
+>...reads the model, extracts the components needed to calculate the prediction, and then creates an R formula that can be translated into SQL
+
+A [vignette](https://tidypredict.tidymodels.org/articles/xgboost.html) within the tidymodesl package also classifies mtcars into automatic or manual using XGBoost. The code is re-peated below to create the data set and XGBoost model. 
+
+```{r}
+xgb_bin_data <- xgboost::xgb.DMatrix(as.matrix(mtcars[, -9]), label = mtcars$am)
+
+model <- xgboost::xgb.train(
+  params = list(max_depth = 2, silent = 1, objective = "binary:logistic", base_score = 0.5),
+  data = xgb_bin_data, nrounds = 50
+)
+```
+
+Then `tidypredict::tidypredict_fit()` is used to return the formula in R `dplyr::case_when()` code required to re-create the am classifiation.
+
+```{r}
+tidypredict::tidypredict_fit(model)
+```
+
+Note how complex this formula is in contrast to the simple Corels rules. 
+
+Next, `tidypredict::tidypredict_to_column()` adds a new column `fit` to the results from `tidypredict::tidypredict_fit()`. Visualising the probability in `fit` against the outcome `am` we can see XGBoost also seperates the cars well into automatic and manual.  
+
+```{r}
+mtcars %>%
+  tidypredict::tidypredict_to_column(model) %>% 
+  ggplot2::ggplot() + 
+  ggplot2::aes(x = as.factor(am), y = fit) + 
+  ggplot2::geom_jitter() +
+  ggplot2::theme_minimal()
+```
