@@ -79,7 +79,7 @@
 
       
 
-      </header><script src="german_credit_data_example_files/htmlwidgets-1.5.1/htmlwidgets.js"></script><script src="german_credit_data_example_files/d3-4.5.0/d3.min.js"></script><script src="german_credit_data_example_files/sankey-1/sankey.js"></script><script src="german_credit_data_example_files/sankeyNetwork-binding-0.4/sankeyNetwork.js"></script><link href="german_credit_data_example_files/vis-4.20.1/vis.css" rel="stylesheet">
+      </header><script src="german_credit_data_example_files/accessible-code-block-0.0.1/empty-anchor.js"></script><script src="german_credit_data_example_files/htmlwidgets-1.5.1/htmlwidgets.js"></script><script src="german_credit_data_example_files/d3-4.5.0/d3.min.js"></script><script src="german_credit_data_example_files/sankey-1/sankey.js"></script><script src="german_credit_data_example_files/sankeyNetwork-binding-0.4/sankeyNetwork.js"></script><link href="german_credit_data_example_files/vis-4.20.1/vis.css" rel="stylesheet">
 <script src="german_credit_data_example_files/vis-4.20.1/vis.min.js"></script><script src="german_credit_data_example_files/visNetwork-binding-2.0.9/visNetwork.js"></script><script src="german_credit_data_example_files/plotly.js-1.47.4/./plotly.min.js"></script><script src="german_credit_data_example_files/parcats-binding-0.0.1/parcats.js"></script><script src="german_credit_data_example_files/kePrint-0.0.1/kePrint.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
@@ -868,16 +868,16 @@ else
     <span class="kw">parameters</span> <span class="kw">=</span> <span class="no">best_xgb</span>
   )
 <span class="no">best_xgb_wfl</span>
-<span class="co">#&gt; == Workflow ========================================================================================================================</span>
+<span class="co">#&gt; == Workflow =====================================================================================================================</span>
 <span class="co">#&gt; Preprocessor: Recipe</span>
 <span class="co">#&gt; Model: boost_tree()</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; -- Preprocessor --------------------------------------------------------------------------------------------------------------------</span>
+<span class="co">#&gt; -- Preprocessor -----------------------------------------------------------------------------------------------------------------</span>
 <span class="co">#&gt; 1 Recipe Step</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; * step_dummy()</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; -- Model ---------------------------------------------------------------------------------------------------------------------------</span>
+<span class="co">#&gt; -- Model ------------------------------------------------------------------------------------------------------------------------</span>
 <span class="co">#&gt; Boosted Tree Model Specification (classification)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Main Arguments:</span>
@@ -895,16 +895,16 @@ else
   <span class="kw pkg">parsnip</span><span class="kw ns">::</span><span class="fu"><a href="https://parsnip.tidymodels.org/reference/reexports.html">fit</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">trainData</span>)
 
 <span class="no">final_fit</span>
-<span class="co">#&gt; == Workflow [trained] ==============================================================================================================</span>
+<span class="co">#&gt; == Workflow [trained] ===========================================================================================================</span>
 <span class="co">#&gt; Preprocessor: Recipe</span>
 <span class="co">#&gt; Model: boost_tree()</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; -- Preprocessor --------------------------------------------------------------------------------------------------------------------</span>
+<span class="co">#&gt; -- Preprocessor -----------------------------------------------------------------------------------------------------------------</span>
 <span class="co">#&gt; 1 Recipe Step</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; * step_dummy()</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; -- Model ---------------------------------------------------------------------------------------------------------------------------</span>
+<span class="co">#&gt; -- Model ------------------------------------------------------------------------------------------------------------------------</span>
 <span class="co">#&gt; ##### xgb.Booster</span>
 <span class="co">#&gt; raw: 645.9 Kb </span>
 <span class="co">#&gt; call:</span>
@@ -1191,7 +1191,7 @@ f_meas
 <blockquote>
 <p>…reads the model, extracts the components needed to calculate the prediction, and then creates an R formula that can be translated into SQL</p>
 </blockquote>
-<p>Then <code><a href="https://tidypredict.tidymodels.org/reference/tidypredict_fit.html">tidypredict::tidypredict_fit()</a></code> is used to return the formula in R <code><a href="https://dplyr.tidyverse.org/reference/case_when.html">dplyr::case_when()</a></code> code required to re-create the classifiation of the XGBoost model. Note how complex this formula is in contrast to the simple Corels rules.</p>
+<p>Then <code><a href="https://tidypredict.tidymodels.org/reference/tidypredict_fit.html">tidypredict::tidypredict_fit()</a></code> is used to return the formula in R <code><a href="https://dplyr.tidyverse.org/reference/case_when.html">dplyr::case_when()</a></code> code required to re-create the classification of the XGBoost model. Note how complex this formula is in contrast to the simple Corels rules.</p>
 <div class="sourceCode" id="cb57"><html><body><pre class="r"><span class="kw pkg">tidypredict</span><span class="kw ns">::</span><span class="fu"><a href="https://tidypredict.tidymodels.org/reference/tidypredict_fit.html">tidypredict_fit</a></span>(<span class="no">final_fit</span>$<span class="no">fit</span>$<span class="no">fit</span>)
 <span class="co">#&gt; 1 - 1/(1 + exp(0 + case_when(creditAmount &gt;= 7829 &amp; checkingStatus_no.checking &gt;= </span>
 <span class="co">#&gt;     0.5 ~ 0, creditAmount &gt;= 9340.5 &amp; (installmentCommitment &lt; </span>

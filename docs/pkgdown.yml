@@ -1,8 +1,8 @@
-pandoc: 2.7.2
+pandoc: 2.7.3
 pkgdown: 1.5.1
 pkgdown_sha: ~
 articles:
   diabetes_example: diabetes_example.html
   german_credit_data_example: german_credit_data_example.html
-last_built: 2020-08-17T19:03Z
+last_built: 2020-08-17T20:03Z
 

@@ -738,7 +738,7 @@ The [tidypredict](https://tidypredict.tidymodels.org/index.html) package..
 
 >...reads the model, extracts the components needed to calculate the prediction, and then creates an R formula that can be translated into SQL
 
-Then `tidypredict::tidypredict_fit()` is used to return the formula in R `dplyr::case_when()` code required to re-create the  classifiation of the XGBoost model. Note how complex this formula is in contrast to the simple Corels rules.
+Then `tidypredict::tidypredict_fit()` is used to return the formula in R `dplyr::case_when()` code required to re-create the classification of the XGBoost model. Note how complex this formula is in contrast to the simple Corels rules.
 
 ```{r}
 tidypredict::tidypredict_fit(final_fit$fit$fit)

@@ -19,7 +19,7 @@ The Corels authors [say](https://corels.eecs.harvard.edu/corels/whatarerulelists
 *"The advantage of rule lists as predictive models is that they are human interpretable, as opposed to black box models such as neural nets. Proponents of such non-interpretable models often claim that they are necessary to achieve greater accuracy, but we have shown that it is possible for rule lists to have comparable or even greater accuracy."*
 
 `tidycorels::tidy_corels()` converts your dataframe into two text files in the format the R package [corels](https://cran.r-project.org/package=corels) expects. It returns the Corels rules as well as applying them to your dataframe using [`data.table::fifelse()`](https://rdatatable.gitlab.io/data.table/reference/fifelse.html) code. 
-Your dataframe is also returned with fewer columns ready to be used in an insightful [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md) plot. It can reveal intuitively both how the Corels rules are applied to your dataframe, and where the classification is correct or incorrect. This reduced dataframe includes: the true label, the columns used in the Corels rules in rule order, then the label column the rules create. 
+Your dataframe is also returned with fewer columns ready to be used in an insightful [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md) plot. It can reveal intuitively both how the Corels rules are applied to your dataframe, and where the classification is correct or incorrect.
 
 ## Installation
 
@@ -222,7 +222,7 @@ The [tidypredict](https://tidypredict.tidymodels.org/index.html) package..
 
 >...reads the model, extracts the components needed to calculate the prediction, and then creates an R formula that can be translated into SQL
 
-A [vignette](https://tidypredict.tidymodels.org/articles/xgboost.html) within the tidymodesl package also classifies mtcars into automatic or manual using XGBoost. The code is re-peated below to create the data set and XGBoost model. 
+A [vignette](https://tidypredict.tidymodels.org/articles/xgboost.html) within the tidymodesl package also classifies mtcars into automatic or manual using XGBoost. The code is repeated below to create the data set and XGBoost model. 
 
 ```{r}
 xgb_bin_data <- xgboost::xgb.DMatrix(as.matrix(mtcars[, -9]), label = mtcars$am)
@@ -241,7 +241,7 @@ tidypredict::tidypredict_fit(model)
 
 Note how complex this formula is in contrast to the simple Corels rules. 
 
-Next, `tidypredict::tidypredict_to_column()` adds a new column `fit` to the results from `tidypredict::tidypredict_fit()`. Visualising the probability in `fit` against the outcome `am` we can see XGBoost also seperates the cars well into automatic and manual.  
+Next, `tidypredict::tidypredict_to_column()` adds a new column `fit` to the results from `tidypredict::tidypredict_fit()`. Visualising the probability in `fit` against the outcome `am` we can see XGBoost also separates the cars well into automatic and manual.  
 
 ```{r}
 mtcars %>%

@@ -36,8 +36,6 @@ used in an insightful
 [alluvial](https://github.com/erblast/easyalluvial/blob/master/README.md)
 plot. It can reveal intuitively both how the Corels rules are applied to
 your dataframe, and where the classification is correct or incorrect.
-This reduced dataframe includes: the true label, the columns used in the
-Corels rules in rule order, then the label column the rules create.
 
 ## Installation
 
@@ -463,7 +461,7 @@ package..
 
 A [vignette](https://tidypredict.tidymodels.org/articles/xgboost.html)
 within the tidymodesl package also classifies mtcars into automatic or
-manual using XGBoost. The code is re-peated below to create the data set
+manual using XGBoost. The code is repeated below to create the data set
 and XGBoost model.
 
 ``` r
@@ -475,7 +473,7 @@ model <- xgboost::xgb.train(
 )
 ```
 
-    ## [20:12:03] WARNING: amalgamation/../src/learner.cc:480: 
+    ## [21:02:11] WARNING: amalgamation/../src/learner.cc:480: 
     ## Parameters: { silent } might not be used.
     ## 
     ##   This may not be accurate due to some parameters are only used in language bindings but
@@ -576,7 +574,7 @@ Note how complex this formula is in contrast to the simple Corels rules.
 Next, `tidypredict::tidypredict_to_column()` adds a new column `fit` to
 the results from `tidypredict::tidypredict_fit()`. Visualising the
 probability in `fit` against the outcome `am` we can see XGBoost also
-seperates the cars well into automatic and manual.
+separates the cars well into automatic and manual.
 
 ``` r
 mtcars %>%
